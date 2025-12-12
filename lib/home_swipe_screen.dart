@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'ar_card.dart';
+//import 'prueba.dart';
 import 'live_position_screen.dart';
 
 class HomeSwipeScreen extends StatefulWidget {
