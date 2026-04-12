@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'ar_card.dart';
+import 'ar_screen.dart';
 //import 'prueba.dart';
 import 'live_position_screen.dart';
 
@@ -41,7 +41,7 @@ class _HomeSwipeScreenState extends State<HomeSwipeScreen> {
               ),
 
               KeepAliveWrapper(
-                child: ARInfoScreen(),
+                child: ARScreen(),
               ),
             ],
           ),
