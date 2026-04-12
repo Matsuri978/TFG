@@ -4,6 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 class LivePositionScreen extends StatefulWidget {
+  const LivePositionScreen({Key? key}) : super(key: key);
+
   @override
   _LivePositionScreenState createState() => _LivePositionScreenState();
 }
@@ -72,18 +74,6 @@ class _LivePositionScreenState extends State<LivePositionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
-      appBar: AppBar(
-          backgroundColor: Colors.green.shade700,
-          centerTitle: false,
-          title: const Text(
-              'Ubicación en tiempo real',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-          ),
-      ),
         body: _currentPosition == null || _currentPlace == null
             ? Center(
           child: Column(

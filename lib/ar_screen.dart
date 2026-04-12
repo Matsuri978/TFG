@@ -9,14 +9,14 @@ import 'package:geolocator/geolocator.dart';
 import 'olivo_service.dart';
 import 'olivo_model.dart';
 
-class ARInfoScreen extends StatefulWidget {
-  const ARInfoScreen({Key? key}) : super(key: key);
+class ARScreen extends StatefulWidget {
+  const ARScreen({Key? key}) : super(key: key);
 
   @override
-  State<ARInfoScreen> createState() => _ARInfoScreenState();
+  State<ARScreen> createState() => _ARScreenState();
 }
 
-class _ARInfoScreenState extends State<ARInfoScreen> {
+class _ARScreenState extends State<ARScreen> {
   ARSessionManager? arSessionManager;
   ARObjectManager? arObjectManager;
 
@@ -43,11 +43,6 @@ class _ARInfoScreenState extends State<ARInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gestión del Olivar'),
-        backgroundColor: Colors.green.shade700,
-        foregroundColor: Colors.white,
-      ),
       body: Stack(
         children: [
           ARView(
