@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'home_swipe_screen.dart';
+import 'services/auth_service.dart';
 import 'welcome_screen.dart'; // Crearemos este archivo ahora
 import 'home_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const AuthGate(),
+      home: AuthService.instance.currentUser == null ? const WelcomeScreen() : const HomeScreen(),
     );
   }
 }
@@ -50,9 +51,7 @@ class AuthGate extends StatelessWidget {
           );
         }
 
-
         final session = snapshot.data?.session;
-
 
         if (session != null) {
           //return const HomeSwipeScreen();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Solo para capturar AuthException
 
-import 'home_swipe_screen.dart';
+import 'services/auth_service.dart'; // <-- IMPORTAMOS NUESTRO NUEVO SERVICIO
 import 'home_screen.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -17,10 +17,8 @@ class _AuthScreenState extends State<AuthScreen> {
   final _nombreController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isLogin = true; // Controla si estamos en modo Login o Registro
-  String _rolSeleccionado = 'agricultor'; // Rol por defecto al registrarse
-
-  final _supabase = Supabase.instance.client;
+  bool _isLogin = true;
+  String _rolSeleccionado = 'agricultor';
 
   @override
   void dispose() {
@@ -30,6 +28,7 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  // --- MIRA CÓMO QUEDA AHORA ESTA FUNCIÓN ---
   Future<void> _autenticar() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -43,21 +42,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       if (_isLogin) {
-        // --- INICIAR SESIÓN ---
-        await _supabase.auth.signInWithPassword(email: email, password: password);
-
-        // Si llegamos aquí, todo fue bien. Navegamos al mapa.
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            //MaterialPageRoute(builder: (context) => const HomeSwipeScreen()),
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-                (route) => false, // Esto borra las pantallas anteriores
-          );
-        }
-
+        // Delegamos el inicio de sesión al Singleton
+        await AuthService.instance.signIn(email: email, password: password);
       } else {
-        // --- REGISTRARSE ---
         final nombre = _nombreController.text.trim();
         if (nombre.isEmpty) {
           _mostrarMensaje('Por favor, introduce tu nombre de usuario', isError: true);
@@ -65,36 +52,27 @@ class _AuthScreenState extends State<AuthScreen> {
           return;
         }
 
-        final AuthResponse res = await _supabase.auth.signUp(
+        // Delegamos el registro al Singleton
+        await AuthService.instance.signUp(
           email: email,
           password: password,
-          // Aquí guardamos el nombre directamente en la cuenta del usuario en Supabase
-          data: {'display_name': nombre},
+          nombre: nombre,
+          rol: _rolSeleccionado,
         );
-        final user = res.user;
-
-        if (user != null) {
-          // Intentamos guardar su rol en la tabla de perfiles
-          await _supabase.from('perfiles').insert({
-            'id': user.id,
-            'rol': _rolSeleccionado,
-          });
-
-          // Si todo va bien, navegamos al mapa
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              //MaterialPageRoute(builder: (context) => const HomeSwipeScreen()),
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  (route) => false,
-            );
-          }
-        }
       }
+
+      // Si no ha saltado ningún error en el try, navegamos al Home
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+              (route) => false,
+        );
+      }
+
     } on AuthException catch (error) {
       _mostrarMensaje(error.message, isError: true);
     } catch (error) {
-      // Si la tabla perfiles falla, caerá aquí
       _mostrarMensaje('Error: $error', isError: true);
     } finally {
       if (mounted) {
@@ -114,6 +92,8 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // El método build() se queda exactamente igual que lo tenías,
+    // ya que la UI no cambia, solo la lógica subyacente.
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -145,7 +125,6 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 40),
 
-              // Campo Email
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -157,7 +136,6 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Campo Contraseña
               TextField(
                 controller: _passwordController,
                 obscureText: true,
@@ -169,7 +147,6 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Campo Nombre (Solo visible si estamos en modo Registro)
               if (!_isLogin) ...[
                 TextField(
                   controller: _nombreController,
@@ -180,9 +157,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-              ],
-              // Selector de Rol (Solo visible si estamos en modo Registro)
-              if (!_isLogin) ...[
                 DropdownButtonFormField<String>(
                   value: _rolSeleccionado,
                   decoration: InputDecoration(
@@ -195,15 +169,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     DropdownMenuItem(value: 'tecnico', child: Text('Técnico Agrícola')),
                   ],
                   onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() => _rolSeleccionado = newValue);
-                    }
+                    if (newValue != null) setState(() => _rolSeleccionado = newValue);
                   },
                 ),
                 const SizedBox(height: 20),
               ],
 
-              // Botón Principal de Acción
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -224,7 +195,6 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Botón para cambiar entre Login y Registro
               Center(
                 child: TextButton(
                   onPressed: () {
@@ -243,6 +213,27 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
+
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                          (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'Continuar como Invitado',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

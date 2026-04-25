@@ -1,197 +1,186 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class PerfilScreen extends StatelessWidget {
+import 'services/auth_service.dart';
+import 'welcome_screen.dart';
+
+class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
 
-  Future<String> _obtenerRol(String userId) async {
-    try {
-      final respuesta = await Supabase.instance.client
-          .from('perfiles')
-          .select('rol')
-          .eq('id', userId)
-          .single();
-      return respuesta['rol'] as String;
-    } catch (e) {
-      return 'invitado';
+  @override
+  State<PerfilScreen> createState() => _PerfilScreenState();
+}
+
+class _PerfilScreenState extends State<PerfilScreen> {
+  final _user = AuthService.instance.currentUser;
+
+  String? _rol;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosPerfil();
+  }
+
+  Future<void> _cargarDatosPerfil() async {
+    if (_user != null) {
+      final rolObtenido = await AuthService.instance.obtenerRol(_user!.id);
+      if (mounted) {
+        setState(() {
+          _rol = rolObtenido;
+          _isLoading = false;
+        });
+      }
+    } else {
+      setState(() {
+        _rol = 'invitado';
+        _isLoading = false;
+      });
     }
   }
 
-  // Lógica de permisos según el rol
-  Map<String, bool> _mapearPermisos(String rol) {
-    bool esAgri = rol == 'agricultor' || rol == 'admin';
-    bool esTec = rol == 'tecnico' || rol == 'admin' || rol == 'agricultor';
-
-    return {
-      'Ver ubicación y mapas': true, // Todos pueden
-      'Uso de Escáner AR': true,     // Todos pueden
-      'Registrar Tratamientos': esAgri || esTec,
-      'Registrar Plagas': esTec,
-      'Modificar datos de Olivos': esTec,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final email = user?.email ?? 'Sesión de invitado';
-    final nombre = user?.userMetadata?['display_name'] ?? 'Invitado';
-
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-
-          // --- CABECERA (ESTILO GITHUB) ---
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 35,
-                  backgroundColor: Colors.grey.shade200,
-                  child: Icon(Icons.person, size: 40, color: Colors.grey.shade600),
-                ),
-                const SizedBox(width: 15),
-                VerticalDivider(color: Colors.grey.shade300, thickness: 2, width: 20),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _infoRow('Nombre', nombre),
-                      _infoRow('Email', email),
-                      FutureBuilder<String>(
-                        future: user != null ? _obtenerRol(user.id) : Future.value('invitado'),
-                        builder: (context, snapshot) {
-                          final rol = snapshot.data ?? 'Cargando...';
-                          return _infoRow('Rol', rol[0].toUpperCase() + rol.substring(1));
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+  Future<void> _cerrarSesion(bool esInvitado) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(esInvitado ? 'Salir' : 'Cerrar Sesión'),
+        content: Text(esInvitado
+            ? '¿Quieres volver a la pantalla de inicio?'
+            : '¿Estás seguro de que quieres salir?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.black)),
           ),
-
-          const SizedBox(height: 40),
-          const Divider(),
-          const SizedBox(height: 10),
-
-          // --- SECCIÓN DE PERMISOS ---
-          const Text(
-            'Permisos del sistema',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 15),
-
-          Expanded(
-            child: FutureBuilder<String>(
-              future: user != null ? _obtenerRol(user.id) : Future.value('invitado'),
-              builder: (context, snapshot) {
-                final permisos = _mapearPermisos(snapshot.data ?? 'invitado');
-
-                return ListView(
-                  children: permisos.entries.map((entry) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        children: [
-                          // Checkbox deshabilitado (no se puede cambiar)
-                          SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: Checkbox(
-                              value: entry.value,
-                              onChanged: null, // Esto lo hace de "solo lectura"
-                              activeColor: Colors.green.shade700,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            entry.key,
-                            style: TextStyle(
-                              color: entry.value ? Colors.black87 : Colors.grey,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-          ),
-
-          // --- BOTÓN CERRAR SESIÓN ---
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red.shade600,
-                side: BorderSide(color: Colors.red.shade600),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const Icon(Icons.logout),
-              label: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)),
-              onPressed: () => _confirmarSalida(context, user == null),
-            ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
+
+    if (confirmar == true) {
+      if (!esInvitado) {
+        await AuthService.instance.signOut();
+      }
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+              (route) => false,
+        );
+      }
+    }
   }
 
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(fontSize: 15, color: Colors.black87),
+  @override
+  Widget build(BuildContext context) {
+    final bool esInvitado = _user == null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mi Perfil'),
+        backgroundColor: Colors.green.shade700,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
-            TextSpan(text: value, style: const TextStyle(color: Colors.black54)),
+            Center(
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey.shade300,
+                child: Icon(Icons.person, size: 60, color: Colors.green.shade900),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            _buildInfoCard(
+              titulo: 'Nombre',
+              valor: esInvitado ? 'Invitado' : (_user!.userMetadata?['display_name'] ?? 'Usuario'),
+              icon: Icons.badge_outlined,
+            ),
+            _buildInfoCard(
+              titulo: 'Correo Electrónico',
+              valor: esInvitado ? 'N/A' : _user!.email ?? 'Sin email',
+              icon: Icons.email_outlined,
+            ),
+            _buildInfoCard(
+              titulo: 'Rol en el sistema',
+              valor: _rol != null ? _rol![0].toUpperCase() + _rol!.substring(1) : 'Cargando...',
+              icon: Icons.settings_accessibility,
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              'Permisos de tu cuenta:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+
+            // --- AQUÍ ESTÁ LA MAGIA DEL SERVICIO ---
+            ...AuthService.instance.obtenerPermisos(_rol ?? 'invitado').entries.map((entrada) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  entrada.value ? Icons.check_circle : Icons.cancel,
+                  color: entrada.value ? Colors.green : Colors.red,
+                  size: 28,
+                ),
+                title: Text(
+                  entrada.key,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: entrada.value ? Colors.black87 : Colors.grey,
+                    decoration: entrada.value ? TextDecoration.none : TextDecoration.lineThrough,
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 40),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton.icon(
+                onPressed: () => _cerrarSesion(esInvitado),
+                icon: Icon(esInvitado ? Icons.login : Icons.logout),
+                label: Text(
+                  esInvitado ? 'Iniciar Sesión' : 'Cerrar Sesión',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: esInvitado ? Colors.green.shade700 : Colors.red.shade700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  void _confirmarSalida(BuildContext context, bool esInvitado) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(esInvitado ? 'Salir' : 'Cerrar sesión'),
-        content: Text(esInvitado
-            ? '¿Quieres volver a la pantalla de inicio?'
-            : '¿Estás seguro de que deseas cerrar sesión?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text(
-            'Cancelar',
-            style: TextStyle(
-              color: Colors.black,
-            ),
-          )),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              Navigator.pop(context);
-              if (!esInvitado) await Supabase.instance.client.auth.signOut();
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            child: const Text('Confirmar',
-              style: TextStyle(
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
+  Widget _buildInfoCard({required String titulo, required String valor, required IconData icon}) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 2,
+      child: ListTile(
+        leading: Icon(icon, color: Colors.green.shade700),
+        title: Text(titulo, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        subtitle: Text(valor, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87)),
       ),
     );
   }
