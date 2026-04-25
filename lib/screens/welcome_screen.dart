@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'auth_screen.dart'; // Lo usaremos más adelante para el login/registro
+import 'package:tfg/screens/screens.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

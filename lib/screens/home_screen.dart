@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'live_position_screen.dart';
-import 'perfil_screen.dart';
-import 'ar_screen.dart'; // Tu nueva pantalla de AR
+
+import 'package:tfg/screens/screens.dart';
 
 enum OpcionMenu {
   perfil(

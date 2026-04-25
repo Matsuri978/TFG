@@ -6,8 +6,8 @@ import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
 import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'olivo_service.dart';
-import 'olivo_model.dart';
+import '../olivo_service.dart';
+import '../olivo_model.dart';
 
 class ARScreen extends StatefulWidget {
   const ARScreen({Key? key}) : super(key: key);

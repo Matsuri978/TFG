@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'ar_screen.dart';
-//import 'prueba.dart';
-import 'live_position_screen.dart';
+import 'screens/ar_screen.dart';
+import 'screens/live_position_screen.dart';
 
 class HomeSwipeScreen extends StatefulWidget {
   const HomeSwipeScreen({Key? key}) : super(key: key);

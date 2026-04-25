@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // Solo para capturar AuthException
 
-import 'services/auth_service.dart'; // <-- IMPORTAMOS NUESTRO NUEVO SERVICIO
-import 'home_screen.dart';
+import 'package:tfg/services/services.dart';
+import 'package:tfg/screens/screens.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

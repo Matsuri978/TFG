@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'services/auth_service.dart';
-import 'welcome_screen.dart';
+import 'package:tfg/services/services.dart';
+import 'package:tfg/screens/screens.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -127,7 +127,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ),
             const SizedBox(height: 10),
 
-            // --- AQUÍ ESTÁ LA MAGIA DEL SERVICIO ---
+
             ...AuthService.instance.obtenerPermisos(_rol ?? 'invitado').entries.map((entrada) {
               return ListTile(
                 contentPadding: EdgeInsets.zero,

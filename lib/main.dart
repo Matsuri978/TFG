@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'services/auth_service.dart';
-import 'welcome_screen.dart'; // Crearemos este archivo ahora
-import 'home_screen.dart';
+import 'package:tfg/services/services.dart';
+import 'package:tfg/screens/screens.dart';
 
 
 Future<void> main() async {
@@ -31,35 +30,6 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: AuthService.instance.currentUser == null ? const WelcomeScreen() : const HomeScreen(),
-    );
-  }
-}
-
-
-class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final session = snapshot.data?.session;
-
-        if (session != null) {
-          //return const HomeSwipeScreen();
-          return const HomeScreen();
-        }
-
-        return const WelcomeScreen();
-      },
     );
   }
 }
