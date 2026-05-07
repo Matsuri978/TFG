@@ -156,11 +156,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 onPressed: () => _cerrarSesion(esInvitado),
                 icon: Icon(esInvitado ? Icons.login : Icons.logout),
                 label: Text(
-                  esInvitado ? 'Iniciar Sesión' : 'Cerrar Sesión',
+                  esInvitado ? 'Salir' : 'Cerrar Sesión',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: esInvitado ? Colors.green.shade700 : Colors.red.shade700,
+                  backgroundColor: Colors.red.shade700,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),

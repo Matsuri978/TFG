@@ -29,9 +29,10 @@ class WelcomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context); // Cierra el diálogo
               // Navegamos al HomeSwipeScreen. Usamos push para que pueda volver atrás si quiere.
-              Navigator.push(
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    (route) => false,
               );
             },
             child: const Text('Continuar', style: TextStyle(color: Colors.white)),
