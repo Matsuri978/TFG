@@ -115,6 +115,12 @@ enum InfoSection {
     title: "Dirección",
     icon: Icons.location_on,
     fieldsBuilder: _buildAddressFields,
+  ),
+
+  sigpac(
+    title: "SigPac",
+    icon: Icons.map_outlined,
+    fieldsBuilder: _buildSigpacFields,
   );
 
   final String title;
@@ -170,30 +176,44 @@ List<Widget> _buildCoordinateFields(Position? pos, Placemark? place) {
 List<Widget> _buildAddressFields(Position? pos, Placemark? place) {
   final db = DatabaseService.instance;
   
-  // Provincia: (Num_Prov) Nombre Provincia
-  String? provinceText;
-  if (db.currentProvince != null) {
-    provinceText = "(${db.currentProvince!['codigo_ine_prov']}) ${db.currentProvince!['nombre']}";
+  // Provincia: Solo la primera en mayúscula y sin el num
+  String? provinceName = db.currentProvince?['nombre'];
+  if (provinceName != null && provinceName.isNotEmpty) {
+    provinceName = provinceName[0].toUpperCase() + provinceName.substring(1).toLowerCase();
   }
 
-  // Ciudad: Nombre (Num_Mun)
-  String? cityText = place?.locality;
-  if (db.currentMunicipality != null) {
-    cityText = "${db.currentMunicipality!['nombre']} (${db.currentMunicipality!['num_municipio']})";
+  String? municipalityName = db.currentMunicipality?['nombre'];
+  if ( municipalityName != null && municipalityName.isNotEmpty ) {
+    municipalityName = municipalityName[0].toUpperCase() + municipalityName.substring(1).toLowerCase();
   }
 
   return [
     _row("País", place?.country),
     _row("C. Autónoma", place?.administrativeArea),
-    _row("Provincia", provinceText),
-    _row("Municipio", cityText),
+    _row("Provincia", provinceName ?? place?.subAdministrativeArea),
+    _row("Municipio", municipalityName ?? place?.locality),
     _row("Calle", place?.street),
     _row("Edificio", place?.name),
     _row("Código postal", place?.postalCode),
-    _row("Parcela", db.currentParcel?['num_parcela']?.toString()),
-    // Recinto: (Num_Poligono) Numero de Recinto
+  ];
+}
+
+List<Widget> _buildSigpacFields(Position? pos, Placemark? place) {
+  final db = DatabaseService.instance;
+
+  return [
+    // Provincia: (Numero INE) Nombre Provincia
+    _row("Provincia", db.currentProvince != null 
+        ? "${db.currentProvince!['nombre']} (${db.currentProvince!['codigo_ine_prov']}) "
+        : null),
+    // Municipio: (Numero Municipio) Nombre Municipio
+    _row("Municipio", db.currentMunicipality != null 
+        ? "${db.currentMunicipality!['nombre']} (${db.currentMunicipality!['num_municipio']}) "
+        : null),
+    _row("Num. Parcela", db.currentParcel?['num_parcela']?.toString()),
+    // Recinto: (Numero de poligono) Id_recinto
     _row("Recinto", db.currentEnclosure != null 
-        ? "(${db.currentEnclosure!.polygonNumber}) ${db.currentEnclosure!.enclosureNumber}"
+        ? "${db.currentEnclosure!.enclosureNumber} (${db.currentEnclosure!.polygonNumber}) "
         : null),
   ];
 }
