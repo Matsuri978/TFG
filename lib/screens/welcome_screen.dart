@@ -17,7 +17,7 @@ class WelcomeScreen extends StatelessWidget {
         ),
         content: const Text(
             'Como invitado podrás ver el mapa y la información pública del olivar, '
-                'pero no podrás registrar plagas, añadir tratamientos ni modificar el estado de los árboles.\n\n'
+                'pero no podrás registrar observaciones, añadir tratamientos ni modificar el estado de los árboles.\n\n'
                 '¿Deseas continuar?'),
         actions: [
           TextButton(

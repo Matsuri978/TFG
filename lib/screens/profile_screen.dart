@@ -81,12 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final bool isGuest = _user == null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Perfil'),
-        backgroundColor: Colors.green.shade700,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -115,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             _buildInfoCard(
               title: 'Rol en el sistema',
-              value: _role != null ? _role![0].toUpperCase() + _role!.substring(1) : 'Cargando...',
+              value: isGuest ? 'Invitado' : _role![0].toUpperCase() + _role!.substring(1),
               icon: Icons.settings_accessibility,
             ),
 
