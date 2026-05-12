@@ -17,11 +17,11 @@ class DatabaseService {
   // ==========================================
   // ESTADO LOCAL (CACHE)
   // ==========================================
-  List<Olive> _olives = [];
-  Enclosure? _currentEnclosure;
-
-  List<Olive> get olives => _olives;
-  Enclosure? get currentEnclosure => _currentEnclosure;
+  List<Olive> olives = [];
+  Enclosure? currentEnclosure;
+  Map<String, dynamic>? currentParcel;
+  Map<String, dynamic>? currentMunicipality;
+  Map<String, dynamic>? currentProvince;
 
   // ==========================================
   // OLIVOS
@@ -35,43 +35,86 @@ class DatabaseService {
           .select()
           .eq('id_recinto_sigpac', enclosureId);
 
-      _olives = response.map((json) => Olive.fromMap(json)).toList();
+      olives = response.map((json) => Olive.fromMap(json)).toList();
     } catch (e) {
       print('Error al actualizar olivos: $e');
-      _olives = [];
+      olives = [];
     }
   }
 
   // ==========================================
-  // RECINTOS
+  // RECINTOS Y UBICACIÓN (MODULAR)
   // ==========================================
 
-  /// Obtiene el recinto por coordenadas y actualiza los olivos si el recinto cambia
-  Future<Enclosure?> getEnclosureByCoordinates(double lat, double lng) async {
+  /// 1. Obtiene el recinto por coordenadas llamando a la función RPC de Postgres
+  Future<Enclosure?> fetchEnclosureByCoordinates(double lat, double lng) async {
     try {
-      final response = await _supabase
-          .from('recintos')
-          .select()
-          .filter('geom', 'st_contains', 'POINT($lng $lat)')
-          .limit(1)
-          .maybeSingle();
+      // Llamamos a la función RPC creada en Supabase (get_enclosure_by_point)
+      final response = await _supabase.rpc('get_enclosure_by_point', params: {
+        'lng_param': lng,
+        'lat_param': lat,
+      }).maybeSingle();
 
       if (response != null) {
         Enclosure newEnclosure = Enclosure.fromMap(response);
 
-        // Si el recinto es diferente al guardado
-        if (newEnclosure.id != _currentEnclosure?.id) {
-          print('Cambio de recinto detectado: ${newEnclosure.id}. Actualizando olivos...');
-          _currentEnclosure = newEnclosure;
+        // SOLO si el ID es diferente al que ya tenemos guardado
+        if (currentEnclosure?.id != newEnclosure.id) {
+          print('Nuevo recinto detectado: ${newEnclosure.id}');
+          currentEnclosure = newEnclosure;
           await _updateOlivesByEnclosure(newEnclosure.id);
         }
-        return newEnclosure;
+        return currentEnclosure;
       }
-      
+
+      currentEnclosure = null;
+      olives = [];
       return null;
     } catch (e) {
-      print('Error al obtener recinto: $e');
+      print('Error al obtener recinto (RPC): $e');
       return null;
+    }
+  }
+
+  /// 2. Obtiene la parcela usando la referencia catastral del recinto
+  Future<void> fetchParcelByRef(String cadastralRef) async {
+    try {
+      currentParcel = await _supabase
+          .from('parcelas')
+          .select()
+          .eq('ref_catastral', cadastralRef)
+          .maybeSingle();
+    } catch (e) {
+      print('Error al obtener parcela: $e');
+      currentParcel = null;
+    }
+  }
+
+  /// 3. Obtiene el municipio usando el código de hoja de la parcela
+  Future<void> fetchMunicipalityBySheet(String sheetCode) async {
+    try {
+      currentMunicipality = await _supabase
+          .from('municipios')
+          .select()
+          .eq('codigo_hoja', sheetCode)
+          .maybeSingle();
+    } catch (e) {
+      print('Error al obtener municipio: $e');
+      currentMunicipality = null;
+    }
+  }
+
+  /// 4. Obtiene la provincia usando el código INE del municipio
+  Future<void> fetchProvinceByIne(String ineCode) async {
+    try {
+      currentProvince = await _supabase
+          .from('provincias')
+          .select()
+          .eq('codigo_ine_prov', ineCode)
+          .maybeSingle();
+    } catch (e) {
+      print('Error al obtener provincia: $e');
+      currentProvince = null;
     }
   }
 
