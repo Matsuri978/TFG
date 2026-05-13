@@ -20,6 +20,12 @@ enum MenuOption {
     appBarTitle: 'Escáner de Realidad Aumentada',
     icon: Icons.qr_code_scanner,
     screen: ARScreen(),
+  ),
+  map(
+    menuTitle: 'Mapa',
+    appBarTitle: 'Mapa del Recinto',
+    icon: Icons.map,
+    screen: MapScreen(),
   );
 
   final String menuTitle;
