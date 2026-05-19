@@ -166,8 +166,8 @@ enum InfoSection {
 
 List<Widget> _buildCoordinateFields(Position? pos, Placemark? place) {
   return [
-    _row("Latitud", pos?.latitude.toStringAsFixed(6)),
     _row("Longitud", pos?.longitude.toStringAsFixed(6)),
+    _row("Latitud", pos?.latitude.toStringAsFixed(6)),
     _row("Altitud", "${pos?.altitude.toStringAsFixed(2)} m"),
     _row("Precisión", "${pos?.accuracy.toStringAsFixed(2)} m"),
   ];

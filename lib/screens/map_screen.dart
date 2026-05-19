@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:tfg/services/services.dart';
 import 'package:tfg/models/models.dart';
@@ -60,27 +61,79 @@ class _MapScreenState extends State<MapScreen> {
                       points: enclosure.coordinates
                           .map((c) => LatLng(c.latitude, c.longitude))
                           .toList(),
-                      color: Colors.green.withValues(alpha: 0.3),
+                      color: Color.fromARGB(51, 250, 201, 3),
                       borderStrokeWidth: 3,
-                      borderColor: Colors.green,
+                      borderColor: Color.fromARGB(255, 0, 255, 0),
                     ),
                   ],
                 ),
 
               MarkerLayer(
                 markers: [
+                  ...olives.map((olive) => Marker(
+                    point: LatLng(olive.latitude, olive.longitude),
+                    width: 40,
+                    height: 40,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Sombras (simulando el efecto del Marker de posición)
+                            ...[
+                              const Offset(-1, -1),
+                              const Offset(1, -1),
+                              const Offset(1, 1),
+                              const Offset(-1, 1),
+                            ].map((offset) => Transform.translate(
+                                  offset: offset,
+                                  child: SvgPicture.asset(
+                                    'assets/olive.svg',
+                                    width: 30,
+                                    height: 30,
+                                    colorFilter: const ColorFilter.mode(
+                                        Colors.black, BlendMode.srcIn),
+                                  ),
+                                )),
+                            // Icono principal
+                            SvgPicture.asset(
+                              'assets/olive.svg',
+                              width: 30,
+                              height: 30,
+                              colorFilter: const ColorFilter.mode(
+                                  Color.fromARGB(255, 35, 87, 23),
+                                  BlendMode.srcIn),
+                            ),
+                          ],
+                        ),
+                      ),
+                      onPressed: () {
+                        // Aquí puedes añadir una acción al pulsar el olivo
+                      },
+                    ),
+                  )),
                   Marker(
                     point: LatLng(pos.latitude, pos.longitude),
                     width: 40,
                     height: 40,
-                    child: const Icon(Icons.my_location, color: Colors.blue, size: 30),
+                    child: const Icon(Icons.my_location, color: Colors.blue, size: 30, shadows: [
+                      Shadow(offset: Offset(-1, -1), color: Colors.black),
+                      Shadow(offset: Offset(1, -1), color: Colors.black),
+                      Shadow(offset: Offset(1, 1), color: Colors.black),
+                      Shadow(offset: Offset(-1, 1), color: Colors.black),
+                    ],),
                   ),
-                  ...olives.map((olive) => Marker(
-                    point: LatLng(olive.latitude, olive.longitude),
-                    width: 20,
-                    height: 20,
-                    child: const Icon(Icons.park, color: Colors.green, size: 15),
-                  )),
                 ],
               ),
             ],
@@ -124,14 +177,14 @@ class _MapScreenState extends State<MapScreen> {
   void _fitEnclosure() {
     final enclosure = DatabaseService.instance.currentEnclosure;
     if (enclosure != null && enclosure.coordinates.isNotEmpty) {
-      final min = enclosure.minBounds;
-      final max = enclosure.maxBounds;
+      final long = LocationService.instance.currentPosition!.longitude;
+      final lat = LocationService.instance.currentPosition!.latitude;
       
       _mapController.fitCamera(
         CameraFit.bounds(
           bounds: LatLngBounds(
-            LatLng(min.latitude, min.longitude),
-            LatLng(max.latitude, max.longitude),
+            LatLng(lat-0.001, long-0.001),
+            LatLng(lat+0.001, long+0.001),
           ),
           padding: const EdgeInsets.all(5), // Menos padding para acercar más la cámara
         ),
