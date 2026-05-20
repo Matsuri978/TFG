@@ -82,7 +82,7 @@ class AuthService {
       'Ver ubicación y mapas': true,
       'Uso de Escáner AR': true,
       'Registrar Tratamientos': esAgri || esTec,
-      'Registrar Plagas': esTec,
+      'Registrar Observaciones': esTec,
       'Modificar datos de Olivos': esTec,
     };
   }
