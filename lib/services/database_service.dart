@@ -118,6 +118,31 @@ class DatabaseService {
     }
   }
 
+  Future<void> updateOliveStatus(int oliveId, String newStatus) async {
+    try {
+      await _supabase
+          .from('olivos')
+          .update({'estado_salud': newStatus}).eq('cod_olivo', oliveId);
+
+      // Actualizar caché local
+      final index = olives.indexWhere((o) => o.id == oliveId);
+      if (index != -1) {
+        final old = olives[index];
+        olives[index] = Olive(
+          id: old.id,
+          enclosureId: old.enclosureId,
+          variety: old.variety,
+          healthStatus: newStatus,
+          latitude: old.latitude,
+          longitude: old.longitude,
+        );
+      }
+    } catch (e) {
+      print('Error al actualizar estado del olivo: $e');
+      rethrow;
+    }
+  }
+
   // ==========================================
   // REGISTROS (Tratamientos y Observaciones)
   // ==========================================
