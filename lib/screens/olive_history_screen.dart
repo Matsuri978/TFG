@@ -7,13 +7,26 @@ class OliveHistoryScreen extends StatelessWidget {
 
   const OliveHistoryScreen({super.key, required this.olive});
 
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'N/A';
+    try {
+      final parts = dateStr.split(RegExp(r'[-/]'));
+      if (parts.length >= 3) {
+        return "${parts[2]}/${parts[1]}/${parts[0]}";
+      }
+      return dateStr;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Historial Olivo ${olive.id}"),
+          title: Text("Historial: Olivo ${olive.id}"),
           backgroundColor: Colors.green.shade700,
           foregroundColor: Colors.white,
           bottom: const TabBar(
@@ -52,32 +65,25 @@ class OliveHistoryScreen extends StatelessWidget {
           itemCount: treatments.length,
           itemBuilder: (context, index) {
             final t = treatments[index];
+            final fecha = _formatDate(t['fecha_tratamiento']);
+
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: ExpansionTile(
                 leading: const Icon(Icons.science, color: Colors.blue),
-                title: Text(t['producto'] ?? 'Tratamiento sin nombre',
+                title: Text(t['producto'] ?? 'Tratamiento',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text("Fecha: ${t['fecha_tratamiento'] ?? 'N/A'}"),
+                subtitle: Text("Fecha: $fecha"),
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: t.entries.map((entry) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("${entry.key}: ",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              Expanded(child: Text("${entry.value}")),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                      children: [
+                        _infoRow("Producto", t['producto']),
+                        _infoRow("Fecha", fecha),
+                        _infoRow("Dosis", t['dosis']),
+                      ],
                     ),
                   )
                 ],
@@ -105,32 +111,26 @@ class OliveHistoryScreen extends StatelessWidget {
           itemCount: observations.length,
           itemBuilder: (context, index) {
             final o = observations[index];
+            final fecha = _formatDate(o['fecha_observacion']);
+
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: ExpansionTile(
                 leading: const Icon(Icons.remove_red_eye, color: Colors.orange),
                 title: Text(o['tipo_observacion'] ?? 'Observación',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text("Fecha: ${o['fecha_observacion'] ?? 'N/A'}"),
+                subtitle: Text("Fecha: $fecha"),
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: o.entries.map((entry) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("${entry.key}: ",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              Expanded(child: Text("${entry.value}")),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                      children: [
+                        _infoRow("Tipo", o['tipo_observacion']),
+                        _infoRow("Fecha", fecha),
+                        _infoRow("Estado", o['estado']),
+                        _infoRow("Descripción", o['descripcion']),
+                      ],
                     ),
                   )
                 ],
@@ -139,6 +139,19 @@ class OliveHistoryScreen extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  Widget _infoRow(String label, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text("${value ?? 'N/A'}")),
+        ],
+      ),
     );
   }
 }
