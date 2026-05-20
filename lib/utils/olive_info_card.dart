@@ -39,7 +39,7 @@ class OliveInfoCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Chip(
-                    backgroundColor: statusColor.withOpacity(0.2),
+                    backgroundColor: statusColor.withValues(alpha: 0.2),
                     avatar: Icon(Icons.park, color: statusColor),
                     label: Text("${olive.id}: $statusText",
                         style: TextStyle(
