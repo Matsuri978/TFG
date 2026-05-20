@@ -8,7 +8,7 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:tfg/services/services.dart';
 import 'package:tfg/models/models.dart';
-import 'package:tfg/utils/olive_info_card.dart';
+import 'package:tfg/utils/utils.dart';
 
 class ARScreen extends StatefulWidget {
   const ARScreen({super.key});

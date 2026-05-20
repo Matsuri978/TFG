@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:tfg/services/services.dart';
 import 'package:tfg/models/models.dart';
-import 'package:tfg/utils/olive_info_card.dart';
+import 'package:tfg/utils/utils.dart';
 
 
 class MapScreen extends StatefulWidget {

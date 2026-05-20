@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tfg/models/models.dart';
-import 'package:tfg/screens/olive_history_screen.dart';
+import 'package:tfg/screens/screens.dart';
 
 class OliveInfoCard extends StatelessWidget {
   final Olive olive;

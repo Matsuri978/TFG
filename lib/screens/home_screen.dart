@@ -1,45 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'package:tfg/screens/screens.dart';
-
-enum MenuOption {
-  profile(
-    menuTitle: 'Perfil',
-    appBarTitle: 'Perfil',
-    icon: Icons.person,
-    screen: ProfileScreen(), // Ahora es una sección más
-  ),
-  home(
-    menuTitle: 'Inicio',
-    appBarTitle: 'Ubicación en tiempo real',
-    icon: Icons.location_on_outlined,
-    screen: LivePositionScreen(),
-  ),
-  arScanner(
-    menuTitle: 'Escáner AR',
-    appBarTitle: 'Escáner de Realidad Aumentada',
-    icon: Icons.qr_code_scanner,
-    screen: ARScreen(),
-  ),
-  map(
-    menuTitle: 'Mapa',
-    appBarTitle: 'Mapa del Recinto',
-    icon: Icons.map,
-    screen: MapScreen(),
-  );
-
-  final String menuTitle;
-  final String appBarTitle;
-  final IconData icon;
-  final Widget screen;
-
-  const MenuOption({
-    required this.menuTitle,
-    required this.appBarTitle,
-    required this.icon,
-    required this.screen,
-  });
-}
+import 'package:tfg/utils/utils.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
