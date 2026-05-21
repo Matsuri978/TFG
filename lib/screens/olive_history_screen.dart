@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tfg/models/models.dart';
 import 'package:tfg/services/services.dart';
+import 'package:tfg/utils/utils.dart';
 
 class OliveHistoryScreen extends StatefulWidget {
   final Olive olive;
@@ -23,14 +24,12 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
   int? _selectedDay;
 
   final TextEditingController _yearController = TextEditingController();
-  final TextEditingController _treatmentSearchController = TextEditingController();
-  final TextEditingController _observationSearchController = TextEditingController();
+  final TextEditingController _treatmentSearchController =
+      TextEditingController();
+  final TextEditingController _observationSearchController =
+      TextEditingController();
 
   final List<int> _months = List.generate(12, (index) => index + 1);
-  final Map<int, String> _monthNames = {
-    1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr', 5: 'May', 6: 'Jun',
-    7: 'Jul', 8: 'Ago', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'
-  };
 
   // Filtros Tratamientos
   String _treatmentSearch = "";
@@ -40,15 +39,8 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
   String? _selectedObsType;
   String? _selectedObsStatus;
 
-  final List<String> _obsTypes = [
-    'General',
-    'Plaga',
-    'Enfermedad',
-    'Poda',
-    'Riego',
-    'Fertilización'
-  ];
-  final List<String> _obsStatuses = ['Sano', 'Enfermo', 'En Tratamiento'];
+  final List<String> _obsTypes = ObservationType.labels;
+  final List<String> _obsStatuses = ObservationStatus.labels;
 
   @override
   void initState() {
@@ -64,6 +56,9 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
     super.dispose();
   }
 
+  /// Comprueba si hay algún filtro o búsqueda activa en la pantalla.
+  ///
+  /// Invocada por: build() para determinar el color y estado del botón de reinicio.
   bool get _anyFilterActive {
     return _selectedYear != null ||
         _selectedMonth != null ||
@@ -74,11 +69,19 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
         _selectedObsStatus != null;
   }
 
+  /// Carga los datos de tratamientos y observaciones desde el servicio de base de datos.
+  ///
+  /// Invocada por: initState() y RefreshIndicator.
   void _loadData() {
-    _treatmentsFuture = DatabaseService.instance.getTreatmentsByOlive(widget.olive.id);
-    _observationsFuture = DatabaseService.instance.getObservationsByOlive(widget.olive.id);
+    _treatmentsFuture =
+        DatabaseService.instance.getTreatmentsByOlive(widget.olive.id);
+    _observationsFuture =
+        DatabaseService.instance.getObservationsByOlive(widget.olive.id);
   }
 
+  /// Restablece todos los filtros y controladores de búsqueda a su estado inicial.
+  ///
+  /// Invocada por: Botón de reinicio en la barra de búsqueda.
   void _resetFilters() {
     setState(() {
       _selectedYear = null;
@@ -94,23 +97,12 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
     });
   }
 
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return 'N/A';
-    try {
-      final DateTime date = DateTime.parse(dateStr);
-      return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
-    } catch (e) {
-      final parts = dateStr.split(RegExp(r'[-/]'));
-      if (parts.length >= 3) {
-        if (parts[0].length == 4) return "${parts[2]}/${parts[1]}/${parts[0]}";
-        return "${parts[0]}/${parts[1]}/${parts[2]}";
-      }
-      return dateStr;
-    }
-  }
-
+  /// Filtra una fecha según los criterios de año, mes y día seleccionados.
+  ///
+  /// Invocada por: Lógica de filtrado en los FutureBuilder de tratamientos y observaciones.
   bool _matchesDate(String? dateStr) {
-    if (_selectedYear == null && _selectedMonth == null && _selectedDay == null) return true;
+    if (_selectedYear == null && _selectedMonth == null && _selectedDay == null)
+      return true;
     if (dateStr == null || dateStr.isEmpty) return false;
     try {
       final DateTime date = DateTime.parse(dateStr);
@@ -121,11 +113,6 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
     } catch (e) {
       return false;
     }
-  }
-
-  int _getDaysInMonth(int? year, int? month) {
-    if (month == null) return 31;
-    return DateUtils.getDaysInMonth(year ?? DateTime.now().year, month);
   }
 
   @override
@@ -160,6 +147,9 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
     );
   }
 
+  /// Construye la barra de búsqueda común para ambas pestañas.
+  ///
+  /// Invocada por: buildTreatmentsTab() y buildObservationsTab().
   Widget _buildSearchBar({
     required TextEditingController controller,
     required String hintText,
@@ -185,7 +175,8 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
               hintText: hintText,
               prefixIcon: const Icon(Icons.search),
               isDense: true,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
               filled: true,
               fillColor: Colors.grey.shade100,
             ),
@@ -200,13 +191,17 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
               color: _showDateFilters ? Colors.green : Colors.grey,
             ),
             tooltip: "Filtros",
-            onPressed: () => setState(() => _showDateFilters = !_showDateFilters),
+            onPressed: () =>
+                setState(() => _showDateFilters = !_showDateFilters),
           ),
         ),
       ],
     );
   }
 
+  /// Construye el contenido de la pestaña de Tratamientos.
+  ///
+  /// Invocada por: build() de OliveHistoryScreen.
   Widget _buildTreatmentsTab() {
     return Column(
       children: [
@@ -234,10 +229,12 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return const Center(child: Text("Error al cargar tratamientos."));
+                return const Center(
+                    child: Text("Error al cargar tratamientos."));
               }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text("No hay tratamientos registrados."));
+                return const Center(
+                    child: Text("No hay tratamientos registrados."));
               }
 
               final treatments = snapshot.data!.where((t) {
@@ -263,24 +260,25 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
                   itemCount: treatments.length,
                   itemBuilder: (context, index) {
                     final t = treatments[index];
-                    final fecha = _formatDate(t['fecha_tratamiento']);
+                    final formattedDate = formatDate(t['fecha_tratamiento']);
 
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
                       child: ExpansionTile(
                         leading: const Icon(Icons.science, color: Colors.blue),
                         title: Text(t['producto'] ?? 'Tratamiento',
                             style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text("Fecha: $fecha"),
+                        subtitle: Text("Fecha: $formattedDate"),
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _infoRow("Producto", t['producto']),
-                                _infoRow("Fecha", fecha),
-                                _infoRow("Dosis", t['dosis']),
+                                infoRow("Producto", t['producto']),
+                                infoRow("Fecha", formattedDate),
+                                infoRow("Dosis", t['dosis']),
                               ],
                             ),
                           )
@@ -297,6 +295,9 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
     );
   }
 
+  /// Construye el contenido de la pestaña de Observaciones.
+  ///
+  /// Invocada por: build() de OliveHistoryScreen.
   Widget _buildObservationsTab() {
     return Column(
       children: [
@@ -317,20 +318,28 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildDropdownFilter(
-                        "Tipo",
-                        _selectedObsType,
-                        _obsTypes,
-                        (val) => setState(() => _selectedObsType = val),
+                      child: buildSimpleDropdown<String>(
+                        hint: "Tipo",
+                        value: _selectedObsType,
+                        items: _obsTypes,
+                        onChanged: (val) =>
+                            setState(() => _selectedObsType = val),
+                        itemText: (val) => val,
+                        showAllOption: true,
+                        allOptionLabel: "Todos (Tipo)",
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _buildDropdownFilter(
-                        "Estado",
-                        _selectedObsStatus,
-                        _obsStatuses,
-                        (val) => setState(() => _selectedObsStatus = val),
+                      child: buildSimpleDropdown<String>(
+                        hint: "Estado",
+                        value: _selectedObsStatus,
+                        items: _obsStatuses,
+                        onChanged: (val) =>
+                            setState(() => _selectedObsStatus = val),
+                        itemText: (val) => val,
+                        showAllOption: true,
+                        allOptionLabel: "Todos (Estado)",
                       ),
                     ),
                   ],
@@ -347,29 +356,40 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return const Center(child: Text("Error al cargar observaciones."));
+                return const Center(
+                    child: Text("Error al cargar observaciones."));
               }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text("No hay observaciones registradas."));
+                return const Center(
+                    child: Text("No hay observaciones registradas."));
               }
 
               final observations = snapshot.data!.where((o) {
                 final matchesDate = _matchesDate(o['fecha_observacion']);
                 final matchesType = _selectedObsType == null ||
                     o['tipo_observacion'] == _selectedObsType;
-                final matchesStatus =
-                    _selectedObsStatus == null || o['estado'] == _selectedObsStatus;
+                final matchesStatus = _selectedObsStatus == null ||
+                    o['estado'] == _selectedObsStatus;
 
                 final String searchText = _observationSearch.toLowerCase();
                 final matchesText = searchText.isEmpty ||
-                    (o['tipo_observacion']?.toString().toLowerCase().contains(searchText) ??
+                    (o['tipo_observacion']
+                            ?.toString()
+                            .toLowerCase()
+                            .contains(searchText) ??
                         false) ||
                     (o['estado']?.toString().toLowerCase().contains(searchText) ??
                         false) ||
-                    (o['descripcion']?.toString().toLowerCase().contains(searchText) ??
+                    (o['descripcion']
+                            ?.toString()
+                            .toLowerCase()
+                            .contains(searchText) ??
                         false);
 
-                return matchesDate && matchesType && matchesStatus && matchesText;
+                return matchesDate &&
+                    matchesType &&
+                    matchesStatus &&
+                    matchesText;
               }).toList();
 
               if (observations.isEmpty) {
@@ -385,25 +405,27 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
                   itemCount: observations.length,
                   itemBuilder: (context, index) {
                     final o = observations[index];
-                    final fecha = _formatDate(o['fecha_observacion']);
+                    final formattedDate = formatDate(o['fecha_observacion']);
 
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
                       child: ExpansionTile(
-                        leading: const Icon(Icons.remove_red_eye, color: Colors.orange),
+                        leading: const Icon(Icons.remove_red_eye,
+                            color: Colors.orange),
                         title: Text(o['tipo_observacion'] ?? 'Observación',
                             style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text("Fecha: $fecha"),
+                        subtitle: Text("Fecha: $formattedDate"),
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _infoRow("Tipo", o['tipo_observacion']),
-                                _infoRow("Fecha", fecha),
-                                _infoRow("Estado", o['estado']),
-                                _infoRow("Descripción", o['descripcion']),
+                                infoRow("Tipo", o['tipo_observacion']),
+                                infoRow("Fecha", formattedDate),
+                                infoRow("Estado", o['estado']),
+                                infoRow("Descripción", o['descripcion']),
                               ],
                             ),
                           )
@@ -420,8 +442,11 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
     );
   }
 
+  /// Construye el selector de fecha progresivo (Año -> Mes -> Día).
+  ///
+  /// Invocada por: _buildTreatmentsTab y _buildObservationsTab.
   Widget _buildProgressiveDateFilter() {
-    final int maxDays = _getDaysInMonth(_selectedYear, _selectedMonth);
+    final int maxDays = getDaysInMonth(_selectedYear, _selectedMonth);
     final List<int> currentDaysList = List.generate(maxDays, (i) => i + 1);
 
     return Row(
@@ -461,127 +486,39 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
         const SizedBox(width: 8),
         Expanded(
           flex: 2,
-          child: _buildSimpleDropdown<int>(
-            "Mes",
-            _selectedMonth,
-            _months,
-            (val) => setState(() {
+          child: buildSimpleDropdown<int>(
+            hint: "Mes",
+            value: _selectedMonth,
+            items: _months,
+            onChanged: (val) => setState(() {
               _selectedMonth = val;
               if (val == null) {
                 _selectedDay = null;
               } else {
                 // Ajustar día si se pasa del límite del nuevo mes
-                if (_selectedDay != null) {
-                  int max = _getDaysInMonth(_selectedYear, val);
-                  if (_selectedDay! > max) _selectedDay = max;
+                int max = getDaysInMonth(_selectedYear, val);
+                if (_selectedDay != null && _selectedDay! > max) {
+                  _selectedDay = max;
                 }
               }
             }),
-            (val) => _monthNames[val] ?? val.toString(),
+            itemText: (val) => monthNames[val] ?? val.toString(),
             enabled: _selectedYear != null,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           flex: 1,
-          child: _buildSimpleDropdown<int>(
-            "Día",
-            _selectedDay,
-            currentDaysList,
-            (val) => setState(() => _selectedDay = val),
-            (val) => val.toString(),
+          child: buildSimpleDropdown<int>(
+            hint: "Día",
+            value: _selectedDay,
+            items: currentDaysList,
+            onChanged: (val) => setState(() => _selectedDay = val),
+            itemText: (val) => val.toString(),
             enabled: _selectedMonth != null,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSimpleDropdown<T>(
-    String hint,
-    T? value,
-    List<T> items,
-    void Function(T?) onChanged,
-    String Function(T) itemText, {
-    bool enabled = true,
-  }) {
-    return Opacity(
-      opacity: enabled ? 1.0 : 0.5,
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: value,
-            hint: Text(hint, style: const TextStyle(fontSize: 12)),
-            isExpanded: true,
-            icon: const Icon(Icons.arrow_drop_down, size: 20),
-            onChanged: enabled ? onChanged : null,
-            items: [
-              DropdownMenuItem<T>(
-                value: null,
-                child: Text(hint, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ),
-              ...items.map((T item) {
-                return DropdownMenuItem<T>(
-                  value: item,
-                  child: Text(itemText(item), style: const TextStyle(fontSize: 12)),
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdownFilter(String label, String? value, List<String> options,
-      void Function(String?) onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          hint: Text(label, style: const TextStyle(fontSize: 14)),
-          isExpanded: true,
-          items: [
-            DropdownMenuItem<String>(
-              value: null,
-              child: Text("Todos ($label)", style: const TextStyle(fontSize: 14)),
-            ),
-            ...options.map((String opt) {
-              return DropdownMenuItem<String>(
-                value: opt,
-                child: Text(opt, style: const TextStyle(fontSize: 14)),
-              );
-            }),
-          ],
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text("${value ?? 'N/A'}")),
-        ],
-      ),
     );
   }
 }

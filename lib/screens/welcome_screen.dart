@@ -1,45 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:tfg/screens/screens.dart';
+import 'package:tfg/utils/utils.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
-  void _continueAsGuest(BuildContext context) {
-    showDialog(
+  /// ****************************
+  /// Muestra un diálogo informativo y permite acceder a la app sin iniciar sesión.
+  /// Invocada por: Botón "Continuar como Invitado".
+  /// ****************************
+  void _continueAsGuest(BuildContext context) async {
+    final confirm = await showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: const [
-            Icon(Icons.info_outline, color: Colors.blue),
-            SizedBox(width: 10),
-            Text('Modo Invitado'),
-          ],
-        ),
-        content: const Text(
-            'Como invitado podrás ver el mapa y la información pública del olivar, '
-                'pero no podrás registrar observaciones, añadir tratamientos ni modificar el estado de los árboles.\n\n'
-                '¿Deseas continuar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), // Cierra el diálogo
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            onPressed: () {
-              Navigator.pop(context); // Cierra el diálogo
-              // Navegamos al HomeSwipeScreen. Usamos push para que pueda volver atrás si quiere.
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
-                    (route) => false,
-              );
-            },
-            child: const Text('Continuar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      title: 'Modo Invitado',
+      content: 'Como invitado podrás ver el mapa y la información pública del olivar, '
+          'pero no podrás registrar observaciones, añadir tratamientos ni modificar el estado de los árboles.\n\n'
+          '¿Deseas continuar?',
+      confirmColor: Colors.green,
+      confirmText: 'Continuar',
     );
+
+    if (confirm) {
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    }
   }
 
   @override

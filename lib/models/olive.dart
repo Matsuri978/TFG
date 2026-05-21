@@ -15,7 +15,7 @@ class Olive {
     required this.longitude,
   });
 
-  /// Convierte la respuesta de Supabase a un objeto Olive
+  /// Convierte la respuesta de Supabase a un objeto Olive.
   factory Olive.fromMap(Map<String, dynamic> map) {
     double lat = 0.0;
     double lng = 0.0;
@@ -27,7 +27,7 @@ class Olive {
       if (geom is Map && geom['coordinates'] != null) {
         lng = (geom['coordinates'][0] as num).toDouble();
         lat = (geom['coordinates'][1] as num).toDouble();
-      } 
+      }
       // Si devuelve WKT String "POINT(lng lat)"
       else if (geom is String) {
         final coords = geom
@@ -52,7 +52,7 @@ class Olive {
     );
   }
 
-  /// Convierte el objeto Olive a Map para Supabase
+  /// Convierte el objeto Olive a Map para Supabase.
   Map<String, dynamic> toMap() {
     return {
       'cod_olivo': id,
@@ -63,6 +63,7 @@ class Olive {
     };
   }
 
+  /// Devuelve el texto formateado de las coordenadas.
   String get coordinatesText =>
       '${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}';
 }

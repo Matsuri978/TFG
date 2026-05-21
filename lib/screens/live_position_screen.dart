@@ -10,8 +10,6 @@ class LivePositionScreen extends StatefulWidget {
 }
 
 class _LivePositionScreenState extends State<LivePositionScreen> {
-  String? _lastEnclosureId;
-
   @override
   void initState() {
     super.initState();
@@ -25,10 +23,17 @@ class _LivePositionScreenState extends State<LivePositionScreen> {
     super.dispose();
   }
 
+  /// Escucha los cambios de ubicación y solicita la actualización del contexto en la base de datos.
+  ///
+  /// Invocada por: LocationService cada vez que cambia la posición.
   void _onLocationChanged() {
     final pos = LocationService.instance.currentPosition;
     if (pos != null) {
-      _updateDatabaseContext(pos.latitude, pos.longitude);
+      DatabaseService.instance
+          .updateLocationContext(pos.latitude, pos.longitude)
+          .then((hasChanged) {
+        if (hasChanged && mounted) setState(() {});
+      });
     }
   }
 
@@ -59,57 +64,18 @@ class _LivePositionScreenState extends State<LivePositionScreen> {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
-              children: InfoSection.values.map(
+              children: InfoSection.values
+                  .map(
                     (section) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: section.buildCard(pos, place),
-                ),
-              ).toList(),
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: section.buildCard(pos, place),
+                    ),
+                  )
+                  .toList(),
             ),
           );
         },
       ),
     );
-  }
-
-  /// Función que llama a las peticiones de base de datos de forma secuencial
-  Future<void> _updateDatabaseContext(double lat, double lng) async {
-    final db = DatabaseService.instance;
-
-    // 1. Buscamos el recinto
-    final enclosure = await db.fetchEnclosureByCoordinates(lat, lng);
-    
-    // Optimizamos: solo realizamos las peticiones extra si el recinto ha cambiado
-    if (enclosure != null) {
-      if (enclosure.id != _lastEnclosureId) {
-        _lastEnclosureId = enclosure.id;
-
-        // 2. Buscamos la parcela usando la ref catastral del recinto
-        await db.fetchParcelByRef(enclosure.cadastralRef);
-
-        // 3. Buscamos el municipio usando el código de hoja de la parcela
-        if (db.currentParcel != null) {
-          await db.fetchMunicipalityBySheet(db.currentParcel!['codigo_hoja']);
-        }
-
-        // 4. Buscamos la provincia usando el código INE del municipio
-        if (db.currentMunicipality != null) {
-          await db.fetchProvinceByIne(db.currentMunicipality!['codigo_ine_prov']);
-        }
-        
-        // Refrescamos la UI ya que han cambiado los datos de ubicación
-        if (mounted) setState(() {});
-      }
-    } else {
-      // Si salimos de un recinto, limpiamos el estado
-      if (_lastEnclosureId != null) {
-        _lastEnclosureId = null;
-        db.currentParcel = null;
-        db.currentMunicipality = null;
-        db.currentProvince = null;
-        db.olives = [];
-        if (mounted) setState(() {});
-      }
-    }
   }
 }

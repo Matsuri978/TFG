@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'; // Solo para capturar A
 
 import 'package:tfg/services/services.dart';
 import 'package:tfg/screens/screens.dart';
+import 'package:tfg/utils/utils.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -28,13 +29,15 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  // --- MIRA CÓMO QUEDA AHORA ESTA FUNCIÓN ---
+  /// Gestiona el flujo de autenticación (Inicio de sesión o Registro).
+  ///
+  /// Invocada por: Botón principal de la pantalla de autenticación.
   Future<void> _authenticate() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showMessage('Por favor, rellena todos los campos', isError: true);
+      showMessage(context, 'Por favor, rellena todos los campos', isError: true);
       return;
     }
 
@@ -47,7 +50,8 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         final name = _nameController.text.trim();
         if (name.isEmpty) {
-          _showMessage('Por favor, introduce tu nombre de usuario', isError: true);
+          showMessage(
+              context, 'Por favor, introduce tu nombre de usuario', isError: true);
           setState(() => _isLoading = false);
           return;
         }
@@ -62,32 +66,23 @@ class _AuthScreenState extends State<AuthScreen> {
       }
 
       // Si no ha saltado ningún error en el try, navegamos al Home
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-              (route) => false,
-        );
-      }
-
+      if (!context.mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
     } on AuthException catch (error) {
-      _showMessage(error.message, isError: true);
+      if (!context.mounted) return;
+      showMessage(context, error.message, isError: true);
     } catch (error) {
-      _showMessage('Error: $error', isError: true);
+      if (!context.mounted) return;
+      showMessage(context, 'Error: $error', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
-  }
-
-  void _showMessage(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green.shade700,
-      ),
-    );
   }
 
   @override
@@ -131,7 +126,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 decoration: InputDecoration(
                   labelText: 'Correo Electrónico',
                   prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                  border:
+                      OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -142,7 +138,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                  border:
+                      OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -153,7 +150,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   decoration: InputDecoration(
                     labelText: 'Nombre y Apellidos',
                     prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    border:
+                        OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -162,11 +160,13 @@ class _AuthScreenState extends State<AuthScreen> {
                   decoration: InputDecoration(
                     labelText: 'Selecciona tu perfil',
                     prefixIcon: const Icon(Icons.badge_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    border:
+                        OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'agricultor', child: Text('Agricultor')),
-                    DropdownMenuItem(value: 'tecnico', child: Text('Técnico Agrícola')),
+                    DropdownMenuItem(
+                        value: 'tecnico', child: Text('Técnico Agrícola')),
                   ],
                   onChanged: (String? newValue) {
                     if (newValue != null) setState(() => _selectedRole = newValue);
@@ -182,15 +182,17 @@ class _AuthScreenState extends State<AuthScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)),
                   ),
                   onPressed: _isLoading ? null : _authenticate,
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
-                    _isLogin ? 'Iniciar Sesión' : 'Registrarse',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                          _isLogin ? 'Iniciar Sesión' : 'Registrarse',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -209,7 +211,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     _isLogin
                         ? '¿No tienes cuenta? Regístrate aquí'
                         : '¿Ya tienes cuenta? Inicia sesión',
-                    style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.green.shade700, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -220,7 +223,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (context) => const HomeScreen()),
-                          (route) => false,
+                      (route) => false,
                     );
                   },
                   child: const Text(

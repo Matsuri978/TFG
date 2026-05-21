@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:tfg/services/services.dart';
 import 'package:tfg/screens/screens.dart';
+import 'package:tfg/utils/helpers.dart';
 
-/// Opciones del menú lateral de la aplicación
+/// Opciones del menú lateral de la aplicación.
+///
+/// Invocada por: HomeScreen (construcción del Drawer y gestión de navegación).
 enum MenuOption {
   profile(
     menuTitle: 'Perfil',
@@ -44,24 +46,26 @@ enum MenuOption {
   });
 }
 
-/// Secciones de información detallada en la pantalla de posición en vivo
+/// Secciones de información detallada en la pantalla de posición en vivo.
+///
+/// Invocada por: LivePositionScreen para renderizar las tarjetas de coordenadas, dirección y SigPac.
 enum InfoSection {
   coordinates(
     title: "Coordenadas",
     icon: Icons.location_searching,
-    fieldsBuilder: _buildCoordinateFields,
+    fieldsBuilder: buildCoordinateFields,
   ),
 
   address(
     title: "Dirección",
     icon: Icons.location_on,
-    fieldsBuilder: _buildAddressFields,
+    fieldsBuilder: buildAddressFields,
   ),
 
   sigpac(
     title: "SigPac",
     icon: Icons.map_outlined,
-    fieldsBuilder: _buildSigpacFields,
+    fieldsBuilder: buildSigpacFields,
   );
 
   final String title;
@@ -74,6 +78,9 @@ enum InfoSection {
     required this.fieldsBuilder,
   });
 
+  /// Construye una tarjeta (Card) para la sección de información.
+  ///
+  /// Invocada por: LivePositionScreen.
   Widget buildCard(Position? pos, Placemark? place) {
     return Card(
       elevation: 4,
@@ -105,67 +112,65 @@ enum InfoSection {
   }
 }
 
-// --- Helpers para InfoSection ---
+/// Tipos de observaciones que se pueden realizar sobre un olivo.
+///
+/// Invocada por: OliveHistoryScreen (filtros y visualización) y diálogos de registro.
+enum ObservationType {
+  general('General'),
+  pest('Plaga'),
+  disease('Enfermedad'),
+  pruning('Poda'),
+  irrigation('Riego'),
+  fertilization('Fertilización');
 
-List<Widget> _buildCoordinateFields(Position? pos, Placemark? place) {
-  return [
-    _row("Longitud", pos?.longitude.toStringAsFixed(6)),
-    _row("Latitud", pos?.latitude.toStringAsFixed(6)),
-    _row("Altitud", "${pos?.altitude.toStringAsFixed(2)} m"),
-    _row("Precisión", "${pos?.accuracy.toStringAsFixed(2)} m"),
-  ];
+  final String label;
+  const ObservationType(this.label);
+
+  static List<String> get labels => values.map((e) => e.label).toList();
 }
 
-List<Widget> _buildAddressFields(Position? pos, Placemark? place) {
-  final db = DatabaseService.instance;
-  
-  String? provinceName = db.currentProvince?['nombre'];
-  if (provinceName != null && provinceName.isNotEmpty) {
-    provinceName = provinceName[0].toUpperCase() + provinceName.substring(1).toLowerCase();
-  }
+/// Estados posibles de un olivo.
+///
+/// Invocada por: OliveInfoCard.
+enum OliveStatus {
+  healthy('Sano'),
+  sick('Enfermo'),
+  underTreatment('En Tratamiento');
 
-  String? municipalityName = db.currentMunicipality?['nombre'];
-  if ( municipalityName != null && municipalityName.isNotEmpty ) {
-    municipalityName = municipalityName[0].toUpperCase() + municipalityName.substring(1).toLowerCase();
-  }
+  final String label;
+  const OliveStatus(this.label);
 
-  return [
-    _row("País", place?.country),
-    _row("C. Autónoma", place?.administrativeArea),
-    _row("Provincia", provinceName ?? place?.subAdministrativeArea),
-    _row("Municipio", municipalityName ?? place?.locality),
-    _row("Calle", place?.street),
-    _row("Edificio", place?.name),
-    _row("Código postal", place?.postalCode),
-  ];
+  static List<String> get labels => values.map((e) => e.label).toList();
 }
 
-List<Widget> _buildSigpacFields(Position? pos, Placemark? place) {
-  final db = DatabaseService.instance;
+/// Estados posibles de una observación en el historial.
+///
+/// Invocada por: OliveHistoryScreen y DatabaseService (actualización de estado).
+enum ObservationStatus {
+  pending('Pendiente'),
+  inProcess('En proceso'),
+  resolved('Resuelta');
 
-  return [
-    _row("Provincia", db.currentProvince != null 
-        ? "${db.currentProvince!['nombre']} (${db.currentProvince!['codigo_ine_prov']}) "
-        : null),
-    _row("Municipio", db.currentMunicipality != null 
-        ? "${db.currentMunicipality!['nombre']} (${db.currentMunicipality!['num_municipio']}) "
-        : null),
-    _row("Num. Parcela", db.currentParcel?['num_parcela']?.toString()),
-    _row("Recinto", db.currentEnclosure != null 
-        ? "${db.currentEnclosure!.enclosureNumber} (${db.currentEnclosure!.polygonNumber}) "
-        : null),
-  ];
+  final String label;
+  const ObservationStatus(this.label);
+
+  static List<String> get labels => values.map((e) => e.label).toList();
 }
 
-Widget _row(String label, String? value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        Text(value ?? "-"),
-      ],
-    ),
-  );
-}
+/// Mapa con los nombres abreviados de los meses en español.
+///
+/// Invocada por: helpers.dart (buildSimpleDropdown) para mostrar meses en filtros.
+const Map<int, String> monthNames = {
+  1: 'Ene',
+  2: 'Feb',
+  3: 'Mar',
+  4: 'Abr',
+  5: 'May',
+  6: 'Jun',
+  7: 'Jul',
+  8: 'Ago',
+  9: 'Sep',
+  10: 'Oct',
+  11: 'Nov',
+  12: 'Dic'
+};

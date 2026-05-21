@@ -12,6 +12,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Controlamos el estado directamente con el enum en lugar de un número
   MenuOption _currentOption = MenuOption.home;
 
+  /// Cambia la pantalla actual mostrada en el Home y cierra el Drawer.
+  ///
+  /// Invocada por: Opciones del menú lateral (Drawer).
   void _changeScreen(MenuOption option) {
     setState(() {
       _currentOption = option;
@@ -27,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
         centerTitle: false,
-
         title: Text(
           _currentOption.appBarTitle,
           style: const TextStyle(
@@ -37,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -47,15 +48,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.only(top: 60, bottom: 30, left: 20),
                 decoration: BoxDecoration(
-                  color: _currentOption == MenuOption.profile ? Colors.green.shade100 : Colors.green.shade50,
-                  border: Border(bottom: BorderSide(color: Colors.green.shade200)),
+                  color: _currentOption == MenuOption.profile
+                      ? Colors.green.shade100
+                      : Colors.green.shade50,
+                  border:
+                      Border(bottom: BorderSide(color: Colors.green.shade200)),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 35,
                       backgroundColor: Colors.green.shade700,
-                      child: const Icon(Icons.person, size: 40, color: Colors.white),
+                      child: const Icon(Icons.person,
+                          size: 40, color: Colors.white),
                     ),
                     const SizedBox(width: 20),
                     Text(
@@ -70,10 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 10),
-
-            ...MenuOption.values.where((option) => option != MenuOption.profile).map((option) {
+            ...MenuOption.values
+                .where((option) => option != MenuOption.profile)
+                .map((option) {
               return ListTile(
                 leading: Icon(option.icon, size: 30, color: Colors.black87),
                 title: Text(option.menuTitle, style: const TextStyle(fontSize: 18)),

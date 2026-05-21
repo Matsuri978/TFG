@@ -17,6 +17,7 @@ class Enclosure {
     required this.coordinates,
   });
 
+  /// Crea un objeto Enclosure a partir de un mapa de Supabase.
   factory Enclosure.fromMap(Map<String, dynamic> map) {
     List<Coordinate> coords = [];
 
@@ -57,7 +58,7 @@ class Enclosure {
     );
   }
 
-  /// Devuelve el punto mínimo del polígono como un objeto Coordinate
+  /// Devuelve el punto mínimo del polígono como un objeto Coordinate.
   Coordinate get minBounds {
     if (coordinates.isEmpty) return Coordinate(latitude: 0.0, longitude: 0.0);
     double minLat = coordinates[0].latitude;
@@ -70,7 +71,7 @@ class Enclosure {
     return Coordinate(latitude: minLat, longitude: minLng);
   }
 
-  /// Devuelve el punto máximo del polígono como un objeto Coordinate
+  /// Devuelve el punto máximo del polígono como un objeto Coordinate.
   Coordinate get maxBounds {
     if (coordinates.isEmpty) return Coordinate(latitude: 0.0, longitude: 0.0);
     double maxLat = coordinates[0].latitude;
@@ -83,6 +84,7 @@ class Enclosure {
     return Coordinate(latitude: maxLat, longitude: maxLng);
   }
 
+  /// Convierte el objeto Enclosure a Map para Supabase.
   Map<String, dynamic> toMap() {
     return {
       'id_recinto_sigpac': id,

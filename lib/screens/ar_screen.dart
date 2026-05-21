@@ -32,6 +32,9 @@ class _ARScreenState extends State<ARScreen> {
     super.dispose();
   }
 
+  /// Reinicia los estados de la interfaz AR.
+  ///
+  /// Invocada por: Cierre de la tarjeta de información del olivo.
   void _resetUI() {
     setState(() {
       showInfoCard = false;
@@ -49,19 +52,23 @@ class _ARScreenState extends State<ARScreen> {
             onARViewCreated: onARViewCreated,
             planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
           ),
-
           viewCard(),
         ],
       ),
     );
   }
 
+  /// Callback que se ejecuta cuando la vista AR se ha creado correctamente.
+  ///
+  /// Inicializa los managers de sesión y objetos.
+  ///
+  /// Invocada por: Widget ARView.
   void onARViewCreated(
-      ARSessionManager sessionManager,
-      ARObjectManager objectManager,
-      dynamic anchorManager,
-      ARLocationManager locationManager,
-      ) {
+    ARSessionManager sessionManager,
+    ARObjectManager objectManager,
+    dynamic anchorManager,
+    ARLocationManager locationManager,
+  ) {
     arSessionManager = sessionManager;
     arObjectManager = objectManager;
 
@@ -80,7 +87,7 @@ class _ARScreenState extends State<ARScreen> {
 
       try {
         Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.best);
+            desiredAccuracy: LocationAccuracy.best);
 
         // Buscamos el olivo más cercano de los cargados en el servicio
         Olive? oliveFound = _getClosestOlive(position);
@@ -98,6 +105,9 @@ class _ARScreenState extends State<ARScreen> {
     };
   }
 
+  /// Busca el olivo más cercano a la posición actual dentro de un radio de 10 metros.
+  ///
+  /// Invocada por: onPlaneDetected al detectar una superficie.
   Olive? _getClosestOlive(Position currentPos) {
     final olives = DatabaseService.instance.olives;
     if (olives.isEmpty) return null;
@@ -121,6 +131,9 @@ class _ARScreenState extends State<ARScreen> {
     return closest;
   }
 
+  /// Decide qué componente mostrar sobre la vista AR (tarjeta de info o mensaje de escaneo).
+  ///
+  /// Invocada por: build() de ARScreen.
   Widget viewCard() {
     if (showInfoCard && _selectedOlive != null) {
       return OliveInfoCard(
@@ -132,6 +145,9 @@ class _ARScreenState extends State<ARScreen> {
     }
   }
 
+  /// Construye el mensaje flotante que indica que se está buscando un olivo.
+  ///
+  /// Invocada por: viewCard().
   Widget _buildScanningMessage() {
     return Positioned(
       top: 20,

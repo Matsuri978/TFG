@@ -6,7 +6,6 @@ import 'package:tfg/services/services.dart';
 import 'package:tfg/models/models.dart';
 import 'package:tfg/utils/utils.dart';
 
-
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -16,7 +15,6 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
-  String? _lastEnclosureId;
   Olive? _selectedOlive;
 
   @override
@@ -32,13 +30,20 @@ class _MapScreenState extends State<MapScreen> {
         listenable: LocationService.instance,
         builder: (context, child) {
           final pos = LocationService.instance.currentPosition;
-          
+
           if (pos == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
           // Actualizamos la información de la base de datos de forma modular
-          _updateDatabaseContext(pos.latitude, pos.longitude);
+          DatabaseService.instance
+              .updateLocationContext(pos.latitude, pos.longitude)
+              .then((hasChanged) {
+            if (hasChanged && mounted) {
+              _fitEnclosure();
+              setState(() {});
+            }
+          });
 
           final db = DatabaseService.instance;
           final enclosure = db.currentEnclosure;
@@ -90,8 +95,7 @@ class _MapScreenState extends State<MapScreen> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.3),
+                                      color: Colors.black.withValues(alpha: 0.3),
                                       blurRadius: 4,
                                       spreadRadius: 1,
                                     ),
@@ -147,8 +151,7 @@ class _MapScreenState extends State<MapScreen> {
                             Shadow(offset: Offset(-1, -1), color: Colors.black),
                             Shadow(offset: Offset(1, -1), color: Colors.black),
                             Shadow(offset: Offset(1, 1), color: Colors.black),
-                            Shadow(
-                                offset: Offset(-1, 1), color: Colors.black),
+                            Shadow(offset: Offset(-1, 1), color: Colors.black),
                           ],
                         ),
                       ),
@@ -177,45 +180,23 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /// Función idéntica a LivePositionScreen para mantener la consistencia
-  Future<void> _updateDatabaseContext(double lat, double lng) async {
-    final db = DatabaseService.instance;
-
-    // 1. Buscamos el recinto
-    final enclosure = await db.fetchEnclosureByCoordinates(lat, lng);
-    
-    // Solo actuamos si el recinto ha cambiado
-    if (enclosure != null) {
-      if (enclosure.id != _lastEnclosureId) {
-        setState(() {
-          _lastEnclosureId = enclosure.id;
-        });
-        // Si el recinto es nuevo, ajustamos la cámara al polígono
-        _fitEnclosure();
-      }
-    } else {
-      // Si salimos de un recinto, limpiamos el estado
-      if (_lastEnclosureId != null) {
-        setState(() {
-          _lastEnclosureId = null;
-        });
-      }
-    }
-  }
-
+  /// Ajusta la cámara del mapa para encuadrar la posición actual.
+  ///
+  /// Invocada por: Botón flotante y automáticamente al cambiar de recinto.
   void _fitEnclosure() {
     final enclosure = DatabaseService.instance.currentEnclosure;
     if (enclosure != null && enclosure.coordinates.isNotEmpty) {
       final long = LocationService.instance.currentPosition!.longitude;
       final lat = LocationService.instance.currentPosition!.latitude;
-      
+
       _mapController.fitCamera(
         CameraFit.bounds(
           bounds: LatLngBounds(
-            LatLng(lat-0.001, long-0.001),
-            LatLng(lat+0.001, long+0.001),
+            LatLng(lat - 0.001, long - 0.001),
+            LatLng(lat + 0.001, long + 0.001),
           ),
-          padding: const EdgeInsets.all(5), // Menos padding para acercar más la cámara
+          padding: const EdgeInsets.all(
+              5), // Menos padding para acercar más la cámara
         ),
       );
     }

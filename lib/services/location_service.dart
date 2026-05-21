@@ -34,6 +34,11 @@ class LocationService extends ChangeNotifier {
   // MÉTODOS DE NEGOCIO (LÓGICA)
   // ==========================================
 
+  /// Inicia el rastreo de la ubicación en tiempo real.
+  ///
+  /// Verifica permisos y actualiza la posición y dirección (geocoding).
+  ///
+  /// Invocada por: LivePositionScreen y MapScreen al inicializarse.
   Future<void> startTracking() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -86,6 +91,9 @@ class LocationService extends ChangeNotifier {
     });
   }
 
+  /// Detiene el rastreo de la ubicación y cancela la suscripción al flujo de posiciones.
+  ///
+  /// Invocada por: Componentes que ya no requieran actualizaciones de ubicación.
   void stopTracking() {
     _positionStreamSubscription?.cancel();
     _positionStreamSubscription = null;

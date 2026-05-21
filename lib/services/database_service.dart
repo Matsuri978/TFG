@@ -27,7 +27,9 @@ class DatabaseService {
   // OLIVOS
   // ==========================================
 
-  /// Obtiene y actualiza la lista local de olivos para un recinto específico
+  /// Obtiene y actualiza la lista local de olivos para un recinto específico.
+  ///
+  /// Invocada por: updateLocationContext cuando cambia el recinto.
   Future<void> _updateOlivesByEnclosure(String enclosureId) async {
     try {
       final List<dynamic> response = await _supabase
@@ -45,7 +47,9 @@ class DatabaseService {
   // RECINTOS Y UBICACIÓN (MODULAR)
   // ==========================================
 
-  /// 1. Obtiene el recinto por coordenadas llamando a la función RPC de Postgres
+  /// Obtiene el recinto por coordenadas llamando a la función RPC de Postgres.
+  ///
+  /// Invocada por: updateLocationContext.
   Future<Enclosure?> fetchEnclosureByCoordinates(double lat, double lng) async {
     try {
       // Llamamos a la función RPC creada en Supabase (get_enclosure_by_point)
@@ -55,25 +59,62 @@ class DatabaseService {
       }).maybeSingle();
 
       if (response != null) {
-        Enclosure newEnclosure = Enclosure.fromMap(response);
-
-        // SOLO si el ID es diferente al que ya tenemos guardado
-        if (currentEnclosure?.id != newEnclosure.id) {
-          currentEnclosure = newEnclosure;
-          await _updateOlivesByEnclosure(newEnclosure.id);
-        }
-        return currentEnclosure;
+        return Enclosure.fromMap(response);
       }
-
-      currentEnclosure = null;
-      olives = [];
       return null;
     } catch (e) {
       return null;
     }
   }
 
-  /// 2. Obtiene la parcela usando la referencia catastral del recinto
+  /// Metodo de conveniencia para actualizar todoo el contexto de ubicación (Recinto, Parcela, Municipio, Provincia).
+  ///
+  /// Devuelve true si el recinto ha cambiado, permitiendo a la UI reaccionar.
+  ///
+  /// Invocada por: LivePositionScreen y MapScreen en cada cambio de ubicación detectado.
+  Future<bool> updateLocationContext(double lat, double lng) async {
+    try {
+      final enclosure = await fetchEnclosureByCoordinates(lat, lng);
+
+      if (enclosure == null) {
+        if (currentEnclosure != null) {
+          currentEnclosure = null;
+          currentParcel = null;
+          currentMunicipality = null;
+          currentProvince = null;
+          olives = [];
+          return true; // Cambio de "estar dentro" a "estar fuera"
+        }
+        return false;
+      }
+
+      // Si el recinto es el mismo que ya tenemos, no hacemos nada más
+      if (currentEnclosure?.id == enclosure.id) {
+        return false;
+      }
+
+      // El recinto ha cambiado, actualizamos todoo
+      currentEnclosure = enclosure;
+      await _updateOlivesByEnclosure(enclosure.id);
+      await fetchParcelByRef(enclosure.cadastralRef);
+
+      if (currentParcel != null) {
+        await fetchMunicipalityBySheet(currentParcel!['codigo_hoja']);
+      }
+
+      if (currentMunicipality != null) {
+        await fetchProvinceByIne(currentMunicipality!['codigo_ine_prov']);
+      }
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Obtiene la parcela usando la referencia catastral del recinto.
+  ///
+  /// Invocada por: updateLocationContext.
   Future<void> fetchParcelByRef(String cadastralRef) async {
     try {
       currentParcel = await _supabase
@@ -86,7 +127,9 @@ class DatabaseService {
     }
   }
 
-  /// 3. Obtiene el municipio usando el código de hoja de la parcela
+  /// Obtiene el municipio usando el código de hoja de la parcela.
+  ///
+  /// Invocada por: updateLocationContext.
   Future<void> fetchMunicipalityBySheet(String sheetCode) async {
     try {
       currentMunicipality = await _supabase
@@ -99,7 +142,9 @@ class DatabaseService {
     }
   }
 
-  /// 4. Obtiene la provincia usando el código INE del municipio
+  /// Obtiene la provincia usando el código INE del municipio.
+  ///
+  /// Invocada por: updateLocationContext.
   Future<void> fetchProvinceByIne(String ineCode) async {
     try {
       currentProvince = await _supabase
@@ -112,6 +157,9 @@ class DatabaseService {
     }
   }
 
+  /// Actualiza el estado de salud de un olivo en la base de datos y en la caché local.
+  ///
+  /// Invocada por: Componentes que gestionen el estado de los olivos.
   Future<void> updateOliveStatus(int oliveId, String newStatus) async {
     try {
       await _supabase
@@ -140,6 +188,9 @@ class DatabaseService {
   // REGISTROS (Tratamientos y Observaciones)
   // ==========================================
 
+  /// Obtiene el historial de tratamientos de un olivo específico.
+  ///
+  /// Invocada por: OliveHistoryScreen (_loadData).
   Future<List<Map<String, dynamic>>> getTreatmentsByOlive(int oliveId) async {
     try {
       return await _supabase
@@ -152,6 +203,9 @@ class DatabaseService {
     }
   }
 
+  /// Obtiene el historial de observaciones de un olivo específico.
+  ///
+  /// Invocada por: OliveHistoryScreen (_loadData).
   Future<List<Map<String, dynamic>>> getObservationsByOlive(int oliveId) async {
     try {
       return await _supabase

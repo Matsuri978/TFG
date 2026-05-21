@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tfg/models/models.dart';
 import 'package:tfg/screens/screens.dart';
 import 'package:tfg/services/services.dart';
+import 'package:tfg/utils/utils.dart';
 
 class OliveInfoCard extends StatefulWidget {
   final Olive olive;
@@ -22,13 +23,23 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
   bool _isEditing = false;
   String? _currentStatus;
   String? _selectedStatus;
-  final List<String> _statusOptions = ['Sano', 'Enfermo', 'En Tratamiento'];
+  final List<String> _statusOptions = OliveStatus.labels;
 
   @override
   void initState() {
     super.initState();
     _currentStatus = widget.olive.healthStatus;
     _selectedStatus = _currentStatus;
+  }
+
+  /// Reinicia el estado de edición de la tarjeta.
+  ///
+  /// Invocada por: Botón de cierre o cancelación de edición.
+  void _resetUI() {
+    setState(() {
+      _isEditing = false;
+      _selectedStatus = _currentStatus;
+    });
   }
 
   @override
@@ -84,10 +95,19 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
               const Divider(),
 
               const SizedBox(height: 4),
-              _buildRowInfo("Variedad:", widget.olive.variety ?? "Desconocida"),
+              infoRow("Variedad", widget.olive.variety ?? "Desconocida",
+                  isBetween: true,
+                  labelColor: Colors.green,
+                  valueWeight: FontWeight.bold),
               _buildStatusRow(),
-              _buildRowInfo("Longitud:", widget.olive.longitude.toString()),
-              _buildRowInfo("Latitud:", widget.olive.latitude.toString()),
+              infoRow("Longitud", widget.olive.longitude.toString(),
+                  isBetween: true,
+                  labelColor: Colors.green,
+                  valueWeight: FontWeight.bold),
+              infoRow("Latitud", widget.olive.latitude.toString(),
+                  isBetween: true,
+                  labelColor: Colors.green,
+                  valueWeight: FontWeight.bold),
 
               const SizedBox(height: 10),
 
@@ -173,6 +193,9 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
     );
   }
 
+  /// Construye la fila de estado, permitiendo cambiar entre visualización y edición.
+  ///
+  /// Invocada por: build() de OliveInfoCard.
   Widget _buildStatusRow() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4.0),
@@ -210,6 +233,9 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
     );
   }
 
+  /// Construye los botones de gestión (Modificar, Aceptar, Cancelar) según el rol y estado de edición.
+  ///
+  /// Invocada por: build() de OliveInfoCard.
   Widget _buildManagementButtons() {
     return FutureBuilder<String>(
       future: AuthService.instance.currentUser != null
@@ -231,13 +257,9 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
                       backgroundColor: Colors.red,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isEditing = false;
-                        _selectedStatus = _currentStatus;
-                      });
-                    },
-                    icon: const Icon(Icons.cancel, size: 16, color: Colors.white),
+                    onPressed: _resetUI,
+                    icon:
+                        const Icon(Icons.cancel, size: 16, color: Colors.white),
                     label: const Text("Cancelar",
                         style: TextStyle(color: Colors.white, fontSize: 12)),
                   ),
@@ -253,27 +275,20 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                     onPressed: () async {
-                      final messenger = ScaffoldMessenger.of(context);
                       try {
-                        await DatabaseService.instance
-                            .updateOliveStatus(widget.olive.id, _selectedStatus!);
+                        await DatabaseService.instance.updateOliveStatus(
+                            widget.olive.id, _selectedStatus!);
+                        if (!context.mounted) return;
                         setState(() {
                           _currentStatus = _selectedStatus;
                           _isEditing = false;
                         });
-                        
-                        messenger.showSnackBar(
-                          const SnackBar(
-                              content: Text("Estado actualizado correctamente")),
-                        );
+                        showMessage(context, "Estado actualizado correctamente",
+                            neutral: true);
                       } catch (e) {
-                        if (mounted) {
-                          messenger.showSnackBar(
-                            SnackBar(
-                                content: Text("Error al actualizar: $e"),
-                                backgroundColor: Colors.red),
-                          );
-                        }
+                        if (!context.mounted) return;
+                        showMessage(context, "Error al actualizar: $e",
+                            isError: true);
                       }
                     },
                     icon: const Icon(Icons.check, size: 16, color: Colors.white),
@@ -303,21 +318,6 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
           );
         }
       },
-    );
-  }
-
-  Widget _buildRowInfo(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  color: Colors.green, fontWeight: FontWeight.bold)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
     );
   }
 }
