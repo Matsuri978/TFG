@@ -37,7 +37,6 @@ class DatabaseService {
 
       olives = response.map((json) => Olive.fromMap(json)).toList();
     } catch (e) {
-      print('Error al actualizar olivos: $e');
       olives = [];
     }
   }
@@ -60,7 +59,6 @@ class DatabaseService {
 
         // SOLO si el ID es diferente al que ya tenemos guardado
         if (currentEnclosure?.id != newEnclosure.id) {
-          print('Nuevo recinto detectado: ${newEnclosure.id}');
           currentEnclosure = newEnclosure;
           await _updateOlivesByEnclosure(newEnclosure.id);
         }
@@ -71,7 +69,6 @@ class DatabaseService {
       olives = [];
       return null;
     } catch (e) {
-      print('Error al obtener recinto (RPC): $e');
       return null;
     }
   }
@@ -85,7 +82,6 @@ class DatabaseService {
           .eq('ref_catastral', cadastralRef)
           .maybeSingle();
     } catch (e) {
-      print('Error al obtener parcela: $e');
       currentParcel = null;
     }
   }
@@ -99,7 +95,6 @@ class DatabaseService {
           .eq('codigo_hoja', sheetCode)
           .maybeSingle();
     } catch (e) {
-      print('Error al obtener municipio: $e');
       currentMunicipality = null;
     }
   }
@@ -113,7 +108,6 @@ class DatabaseService {
           .eq('codigo_ine_prov', ineCode)
           .maybeSingle();
     } catch (e) {
-      print('Error al obtener provincia: $e');
       currentProvince = null;
     }
   }
@@ -138,7 +132,6 @@ class DatabaseService {
         );
       }
     } catch (e) {
-      print('Error al actualizar estado del olivo: $e');
       rethrow;
     }
   }
@@ -155,7 +148,6 @@ class DatabaseService {
           .eq('cod_olivo', oliveId)
           .order('fecha_tratamiento', ascending: false);
     } catch (e) {
-      print('Error al obtener tratamientos: $e');
       return [];
     }
   }
@@ -168,7 +160,6 @@ class DatabaseService {
           .eq('cod_olivo', oliveId)
           .order('fecha_observacion', ascending: false);
     } catch (e) {
-      print('Error al obtener observaciones: $e');
       return [];
     }
   }
