@@ -229,42 +229,36 @@ Widget buildSimpleDropdown<T>({
   bool enabled = true,
   bool showAllOption = false,
   String? allOptionLabel,
+  String? Function(T?)? validator,
 }) {
   return Opacity(
     opacity: enabled ? 1.0 : 0.5,
-    child: Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
+    child: DropdownButtonFormField<T>(
+      initialValue: value,
+      validator: validator,
+      onChanged: enabled ? onChanged : null,
+      decoration: InputDecoration(
+        labelText: hint,
+        hintText: hint,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        isDense: true,
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          hint: Text(hint, style: const TextStyle(fontSize: 14)),
-          isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down, size: 20),
-          onChanged: enabled ? onChanged : null,
-          items: [
-            DropdownMenuItem<T>(
-              value: null,
-              child: Text(showAllOption ? (allOptionLabel ?? "Todos") : hint,
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: showAllOption ? Colors.black : Colors.grey)),
-            ),
-            ...items.map((T item) {
-              return DropdownMenuItem<T>(
-                value: item,
-                child:
-                    Text(itemText(item), style: const TextStyle(fontSize: 14)),
-              );
-            }),
-          ],
+      items: [
+        DropdownMenuItem<T>(
+          value: null,
+          child: Text(showAllOption ? (allOptionLabel ?? "Todos") : hint,
+              style: TextStyle(
+                  fontSize: 16,
+                  color: showAllOption ? Colors.black : Colors.grey)),
         ),
-      ),
+        ...items.map((T item) {
+          return DropdownMenuItem<T>(
+            value: item,
+            child: Text(itemText(item), style: const TextStyle(fontSize: 16)),
+          );
+        }),
+      ],
     ),
   );
 }

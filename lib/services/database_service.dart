@@ -217,4 +217,48 @@ class DatabaseService {
       return [];
     }
   }
+
+  /// Registra un nuevo tratamiento para un olivo.
+  ///
+  /// Invocada por: RegisterActionScreen.
+  Future<void> addTreatment({
+    required int oliveId,
+    required String product,
+    required String dose,
+    required DateTime date,
+  }) async {
+    try {
+      await _supabase.from('registro_tratamientos').insert({
+        'cod_olivo': oliveId,
+        'producto': product,
+        'dosis': dose,
+        'fecha_tratamiento': date.toIso8601String(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Registra una nueva observación para un olivo.
+  ///
+  /// Invocada por: RegisterActionScreen.
+  Future<void> addObservation({
+    required int oliveId,
+    required String type,
+    required String status,
+    required String description,
+    required DateTime date,
+  }) async {
+    try {
+      await _supabase.from('registro_observaciones').insert({
+        'cod_olivo': oliveId,
+        'tipo_observacion': type,
+        'estado': status,
+        'descripcion': description,
+        'fecha_observacion': date.toIso8601String(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

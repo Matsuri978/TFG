@@ -159,33 +159,29 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
 
               const SizedBox(height: 15),
 
-              FutureBuilder<String>(
-                future: AuthService.instance.currentUser != null
-                    ? AuthService.instance
-                        .getRole(AuthService.instance.currentUser!.id)
-                    : Future.value('guest'),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const SizedBox.shrink();
-
-                  String role = snapshot.data!;
-                  if (role == 'guest') return const SizedBox.shrink();
-
-                  String label = (role == 'tecnico' || role == 'admin')
-                      ? "Registrar Observación/Tratamiento"
-                      : "Registrar Tratamiento";
-
-                  return SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.add_circle_outline),
-                      label: Text(label),
-                      onPressed: () {
-                        // Aquí iría la lógica para abrir un formulario de registro
-                      },
-                    ),
-                  );
-                },
-              )
+              if (AuthService.instance.currentRole != 'guest' &&
+                  AuthService.instance.currentRole.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.add_circle_outline),
+                    label: Text((AuthService.instance.currentRole == 'tecnico' ||
+                            AuthService.instance.currentRole == 'admin')
+                        ? "Registrar Observación/Tratamiento"
+                        : "Registrar Tratamiento"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RegisterActionScreen(
+                            olive: widget.olive,
+                            role: AuthService.instance.currentRole,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
             ],
           ),
         ),
@@ -211,8 +207,7 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
                     value: _selectedStatus,
                     isDense: true,
                     style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold),
+                        color: Colors.black, fontWeight: FontWeight.bold),
                     items: _statusOptions.map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -237,87 +232,78 @@ class _OliveInfoCardState extends State<OliveInfoCard> {
   ///
   /// Invocada por: build() de OliveInfoCard.
   Widget _buildManagementButtons() {
-    return FutureBuilder<String>(
-      future: AuthService.instance.currentUser != null
-          ? AuthService.instance.getRole(AuthService.instance.currentUser!.id)
-          : Future.value('guest'),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox.shrink();
-        String role = snapshot.data!;
-        if (role != 'tecnico' && role != 'admin') return const SizedBox.shrink();
+    final role = AuthService.instance.currentRole;
+    if (role != 'tecnico' && role != 'admin') return const SizedBox.shrink();
 
-        if (_isEditing) {
-          return Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 35,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    onPressed: _resetUI,
-                    icon:
-                        const Icon(Icons.cancel, size: 16, color: Colors.white),
-                    label: const Text("Cancelar",
-                        style: TextStyle(color: Colors.white, fontSize: 12)),
-                  ),
+    if (_isEditing) {
+      return Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 35,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
+                onPressed: _resetUI,
+                icon: const Icon(Icons.cancel, size: 16, color: Colors.white),
+                label: const Text("Cancelar",
+                    style: TextStyle(color: Colors.white, fontSize: 12)),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 35,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    onPressed: () async {
-                      try {
-                        await DatabaseService.instance.updateOliveStatus(
-                            widget.olive.id, _selectedStatus!);
-                        if (!context.mounted) return;
-                        setState(() {
-                          _currentStatus = _selectedStatus;
-                          _isEditing = false;
-                        });
-                        showMessage(context, "Estado actualizado correctamente",
-                            neutral: true);
-                      } catch (e) {
-                        if (!context.mounted) return;
-                        showMessage(context, "Error al actualizar: $e",
-                            isError: true);
-                      }
-                    },
-                    icon: const Icon(Icons.check, size: 16, color: Colors.white),
-                    label: const Text("Aceptar",
-                        style: TextStyle(color: Colors.white, fontSize: 12)),
-                  ),
-                ),
-              ),
-            ],
-          );
-        } else {
-          return SizedBox(
-            width: double.infinity,
-            height: 35,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600),
-              onPressed: () {
-                setState(() {
-                  _isEditing = true;
-                });
-              },
-              icon: const Icon(Icons.edit, size: 18, color: Colors.white),
-              label: const Text("Modificar estado",
-                  style: TextStyle(color: Colors.white)),
             ),
-          );
-        }
-      },
-    );
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SizedBox(
+              height: 35,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () async {
+                  try {
+                    await DatabaseService.instance
+                        .updateOliveStatus(widget.olive.id, _selectedStatus!);
+                    if (!context.mounted) return;
+                    setState(() {
+                      _currentStatus = _selectedStatus;
+                      _isEditing = false;
+                    });
+                    showMessage(context, "Estado actualizado correctamente",
+                        neutral: true);
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    showMessage(context, "Error al actualizar: $e",
+                        isError: true);
+                  }
+                },
+                icon: const Icon(Icons.check, size: 16, color: Colors.white),
+                label: const Text("Aceptar",
+                    style: TextStyle(color: Colors.white, fontSize: 12)),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      return SizedBox(
+        width: double.infinity,
+        height: 35,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600),
+          onPressed: () {
+            setState(() {
+              _isEditing = true;
+            });
+          },
+          icon: const Icon(Icons.edit, size: 18, color: Colors.white),
+          label: const Text("Modificar estado",
+              style: TextStyle(color: Colors.white)),
+        ),
+      );
+    }
   }
 }
+

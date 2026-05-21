@@ -124,7 +124,7 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
         length: 2,
         child: Scaffold(
           appBar: AppBar(
-            title: Text("Historial: Olivo ${widget.olive.id}"),
+            title: Text("Historial: Olivo (${widget.olive.variety})"),
             backgroundColor: Colors.green.shade700,
             foregroundColor: Colors.white,
             bottom: const TabBar(
