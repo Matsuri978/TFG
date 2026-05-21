@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:tfg/services/services.dart';
 import 'package:tfg/screens/screens.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 
 Future<void> main() async {
@@ -17,6 +17,8 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -29,6 +31,15 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'),
+      ],
+      locale: const Locale('es', 'ES'),
       home: AuthService.instance.currentUser == null ? const WelcomeScreen() : const HomeScreen(),
     );
   }
