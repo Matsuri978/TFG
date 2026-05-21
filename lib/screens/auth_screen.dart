@@ -87,7 +87,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // El método build() se queda exactamente igual que lo tenías,
+    // El metodo build() se queda exactamente igual que lo tenías,
     // ya que la UI no cambia, solo la lógica subyacente.
     return Scaffold(
       backgroundColor: Colors.white,

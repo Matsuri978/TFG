@@ -5,10 +5,10 @@ import 'package:tfg/utils/utils.dart';
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
-  /// ****************************
+
   /// Muestra un diálogo informativo y permite acceder a la app sin iniciar sesión.
+  ///
   /// Invocada por: Botón "Continuar como Invitado".
-  /// ****************************
   void _continueAsGuest(BuildContext context) async {
     final confirm = await showConfirmDialog(
       context: context,

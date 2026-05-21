@@ -101,8 +101,9 @@ class _OliveHistoryScreenState extends State<OliveHistoryScreen> {
   ///
   /// Invocada por: Lógica de filtrado en los FutureBuilder de tratamientos y observaciones.
   bool _matchesDate(String? dateStr) {
-    if (_selectedYear == null && _selectedMonth == null && _selectedDay == null)
+    if (_selectedYear == null && _selectedMonth == null && _selectedDay == null) {
       return true;
+    }
     if (dateStr == null || dateStr.isEmpty) return false;
     try {
       final DateTime date = DateTime.parse(dateStr);
