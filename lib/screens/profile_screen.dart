@@ -12,34 +12,14 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _user = AuthService.instance.currentUser;
-
-  String? _role;
-  bool _isLoading = true;
+  late final String _role;
 
   @override
   void initState() {
     super.initState();
-    _loadProfileData();
-  }
-
-  /// Carga el rol del usuario actual desde la base de datos.
-  ///
-  /// Invocada por: initState().
-  Future<void> _loadProfileData() async {
-    if (_user != null) {
-      final roleObtained = await AuthService.instance.getRole(_user.id);
-      if (mounted) {
-        setState(() {
-          _role = roleObtained;
-          _isLoading = false;
-        });
-      }
-    } else {
-      setState(() {
-        _role = 'guest';
-        _isLoading = false;
-      });
-    }
+    _role = AuthService.instance.currentRole.isEmpty
+        ? 'guest'
+        : AuthService.instance.currentRole;
   }
 
   /// Gestiona el cierre de sesión o la salida del modo invitado con confirmación.
@@ -74,94 +54,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final bool isGuest = _user == null;
 
     return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey.shade300,
-                      child: Icon(Icons.person,
-                          size: 60, color: Colors.green.shade900),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  infoCard(
-                    title: 'Nombre',
-                    value: isGuest
-                        ? 'Invitado'
-                        : (_user.userMetadata?['display_name'] ?? 'Usuario'),
-                    icon: Icons.badge_outlined,
-                    iconColor: Colors.green.shade700,
-                  ),
-                  infoCard(
-                    title: 'Correo Electrónico',
-                    value: isGuest ? 'N/A' : _user.email ?? 'Sin email',
-                    icon: Icons.email_outlined,
-                    iconColor: Colors.green.shade700,
-                  ),
-                  infoCard(
-                    title: 'Rol en el sistema',
-                    value: isGuest ? 'Invitado' : _role!.capitalize(),
-                    icon: Icons.settings_accessibility,
-                    iconColor: Colors.green.shade700,
-                  ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'Permisos de tu cuenta:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  ...AuthService.instance
-                      .getPermissions(_role ?? 'guest')
-                      .entries
-                      .map((entry) {
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        entry.value ? Icons.check_circle : Icons.cancel,
-                        color: entry.value ? Colors.green : Colors.red,
-                        size: 28,
-                      ),
-                      title: Text(
-                        entry.key,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: entry.value ? Colors.black87 : Colors.grey,
-                          decoration: entry.value
-                              ? TextDecoration.none
-                              : TextDecoration.lineThrough,
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _signOut(isGuest),
-                      icon: Icon(isGuest ? Icons.login : Icons.logout),
-                      label: Text(
-                        isGuest ? 'Salir' : 'Cerrar Sesión',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade700,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15)),
-                      ),
-                    ),
-                  ),
-                ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey.shade300,
+                child:
+                    Icon(Icons.person, size: 60, color: Colors.green.shade900),
               ),
             ),
+            const SizedBox(height: 20),
+            infoCard(
+              title: 'Nombre',
+              value: isGuest
+                  ? 'Invitado'
+                  : (_user.userMetadata?['display_name'] ?? 'Usuario'),
+              icon: Icons.badge_outlined,
+              iconColor: Colors.green.shade700,
+            ),
+            infoCard(
+              title: 'Correo Electrónico',
+              value: isGuest ? 'N/A' : _user.email ?? 'Sin email',
+              icon: Icons.email_outlined,
+              iconColor: Colors.green.shade700,
+            ),
+            infoCard(
+              title: 'Rol en el sistema',
+              value: isGuest ? 'Invitado' : _role.capitalize(),
+              icon: Icons.settings_accessibility,
+              iconColor: Colors.green.shade700,
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              'Permisos de tu cuenta:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            ...AuthService.instance.getPermissions().entries.map((entry) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  entry.value ? Icons.check_circle : Icons.cancel,
+                  color: entry.value ? Colors.green : Colors.red,
+                  size: 28,
+                ),
+                title: Text(
+                  entry.key,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: entry.value ? Colors.black87 : Colors.grey,
+                    decoration: entry.value
+                        ? TextDecoration.none
+                        : TextDecoration.lineThrough,
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton.icon(
+                onPressed: () => _signOut(isGuest),
+                icon: Icon(isGuest ? Icons.login : Icons.logout),
+                label: Text(
+                  isGuest ? 'Salir' : 'Cerrar Sesión',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

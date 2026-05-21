@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tfg/services/services.dart';
 import 'package:tfg/utils/utils.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -11,6 +12,26 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // Controlamos el estado directamente con el enum en lugar de un número
   MenuOption _currentOption = MenuOption.home;
+  bool _roleLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAuth();
+  }
+
+  /// Inicializa la autenticación cargando el rol del usuario actual.
+  Future<void> _initAuth() async {
+    final user = AuthService.instance.currentUser;
+    if (user != null) {
+      await AuthService.instance.getRole(user.id);
+    }
+    if (mounted) {
+      setState(() {
+        _roleLoaded = true;
+      });
+    }
+  }
 
   /// Cambia la pantalla actual mostrada en el Home y cierra el Drawer.
   ///
@@ -91,7 +112,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       // Mostramos la pantalla leyendo directamente el widget guardado en el enum
-      body: _currentOption.screen,
+      body: !_roleLoaded
+          ? const Center(child: CircularProgressIndicator())
+          : _currentOption.screen,
     );
   }
 }

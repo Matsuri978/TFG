@@ -13,6 +13,11 @@ class AuthService {
 
   final _supabase = Supabase.instance.client;
 
+  String _role = "";
+
+  /// Devuelve el rol guardado en memoria.
+  String get currentRole => _role;
+
   // ==========================================
   // LÓGICA DE NEGOCIO
   // ==========================================
@@ -53,6 +58,7 @@ class AuthService {
         'id': user.id,
         'rol': role,
       });
+      _role = role;
     }
   }
 
@@ -61,22 +67,27 @@ class AuthService {
   /// Invocada por: ProfileScreen (_signOut).
   Future<void> signOut() async {
     await _supabase.auth.signOut();
+    _role = "";
   }
 
   /// Obtiene el rol de un usuario desde la tabla 'perfiles'.
   ///
   /// Invocada por: ProfileScreen (_loadProfileData).
   Future<String> getRole(String userId) async {
-    try {
-      final response = await _supabase
-          .from('perfiles')
-          .select('rol')
-          .eq('id', userId)
-          .single();
-      return response['rol'] as String;
-    } catch (e) {
-      return 'guest';
+    if (_role == "") {
+      try {
+        final response = await _supabase
+            .from('perfiles')
+            .select('rol')
+            .eq('id', userId)
+            .single();
+        _role = response['rol'] as String;
+      } catch (e) {
+        _role = 'guest';
+      }
     }
+
+   return _role;
   }
 
   // ==========================================
@@ -86,9 +97,9 @@ class AuthService {
   /// Devuelve el mapa completo de permisos según el rol.
   ///
   /// Invocada por: ProfileScreen para listar los permisos en la UI.
-  Map<String, bool> getPermissions(String role) {
-    bool isFarmer = role == 'agricultor' || role == 'admin';
-    bool isTechnician = role == 'tecnico' || role == 'admin';
+  Map<String, bool> getPermissions() {
+    bool isFarmer = _role == 'agricultor' || _role == 'admin';
+    bool isTechnician = _role == 'tecnico' || _role == 'admin';
 
     return {
       'Ver ubicación y mapas': true,
@@ -102,8 +113,8 @@ class AuthService {
   /// Metodo rápido para comprobar si un rol tiene un permiso específico.
   ///
   /// Invocada por: Componentes que necesiten validar acciones específicas.
-  bool hasPermission(String role, String action) {
-    final permissions = getPermissions(role);
+  bool hasPermission(String action) {
+    final permissions = getPermissions();
     return permissions[action] ?? false;
   }
 }
