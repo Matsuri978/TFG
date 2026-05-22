@@ -40,7 +40,7 @@ class _MapScreenState extends State<MapScreen> {
               .updateLocationContext(pos.latitude, pos.longitude)
               .then((hasChanged) {
             if (hasChanged && mounted) {
-              _fitEnclosure();
+              _focusOnCurrentLocation();
               setState(() {});
             }
           });
@@ -85,7 +85,8 @@ class _MapScreenState extends State<MapScreen> {
                   MarkerLayer(
                     markers: [
                       ...olives.map((olive) => Marker(
-                            point: LatLng(olive.latitude, olive.longitude),
+                            point: LatLng(olive.location.latitude,
+                                olive.location.longitude),
                             width: 40,
                             height: 40,
                             child: IconButton(
@@ -173,30 +174,35 @@ class _MapScreenState extends State<MapScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _fitEnclosure,
+        onPressed: _focusOnCurrentLocation,
         backgroundColor: Colors.green.shade700,
         child: const Icon(Icons.center_focus_strong, color: Colors.white),
       ),
     );
   }
 
-  /// Ajusta la cámara del mapa para encuadrar la posición actual.
+  /// Ajusta la cámara del mapa para encuadrar la posición actual con un margen de seguridad.
   ///
   /// Invocada por: Botón flotante y automáticamente al cambiar de recinto.
-  void _fitEnclosure() {
-    final enclosure = DatabaseService.instance.currentEnclosure;
-    if (enclosure != null && enclosure.coordinates.isNotEmpty) {
-      final long = LocationService.instance.currentPosition!.longitude;
-      final lat = LocationService.instance.currentPosition!.latitude;
+  void _focusOnCurrentLocation() {
+    final pos = LocationService.instance.currentPosition;
+    if (pos != null) {
+      const double margin = 0.001;
+
+      // Aseguramos que las coordenadas estén dentro de los límites terrestres (-90/90 y -180/180)
+      final southWest = LatLng(
+        (pos.latitude - margin).clamp(-90.0, 90.0),
+        (pos.longitude - margin).clamp(-180.0, 180.0),
+      );
+      final northEast = LatLng(
+        (pos.latitude + margin).clamp(-90.0, 90.0),
+        (pos.longitude + margin).clamp(-180.0, 180.0),
+      );
 
       _mapController.fitCamera(
         CameraFit.bounds(
-          bounds: LatLngBounds(
-            LatLng(lat - 0.001, long - 0.001),
-            LatLng(lat + 0.001, long + 0.001),
-          ),
-          padding: const EdgeInsets.all(
-              5), // Menos padding para acercar más la cámara
+          bounds: LatLngBounds(southWest, northEast),
+          padding: const EdgeInsets.all(5),
         ),
       );
     }
