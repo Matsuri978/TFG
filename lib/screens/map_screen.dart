@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:tfg/services/services.dart';
 import 'package:tfg/models/models.dart';
 import 'package:tfg/utils/utils.dart';
@@ -15,7 +16,9 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
+  final _fabKey = GlobalKey<ExpandableFabState>();
   Olive? _selectedOlive;
+  bool _showOlives = true;
 
   @override
   void initState() {
@@ -84,62 +87,66 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   MarkerLayer(
                     markers: [
-                      ...olives.map((olive) => Marker(
-                            point: LatLng(olive.location.latitude,
-                                olive.location.longitude),
-                            width: 40,
-                            height: 40,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.3),
-                                      blurRadius: 4,
-                                      spreadRadius: 1,
-                                    ),
-                                  ],
+                      if (_showOlives)
+                        ...olives.map((olive) => Marker(
+                              point: LatLng(olive.location.latitude,
+                                  olive.location.longitude),
+                              width: 40,
+                              height: 40,
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                icon: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            Colors.black.withValues(alpha: 0.3),
+                                        blurRadius: 4,
+                                        spreadRadius: 1,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      // Sombras (simulando el efecto del Marker de posición)
+                                      ...[
+                                        const Offset(-1, -1),
+                                        const Offset(1, -1),
+                                        const Offset(1, 1),
+                                        const Offset(-1, 1),
+                                      ].map((offset) => Transform.translate(
+                                            offset: offset,
+                                            child: SvgPicture.asset(
+                                              'assets/olive.svg',
+                                              width: 30,
+                                              height: 30,
+                                              colorFilter:
+                                                  const ColorFilter.mode(
+                                                      Colors.black,
+                                                      BlendMode.srcIn),
+                                            ),
+                                          )),
+                                      // Icono principal
+                                      SvgPicture.asset(
+                                        'assets/olive.svg',
+                                        width: 30,
+                                        height: 30,
+                                        colorFilter: const ColorFilter.mode(
+                                            Color.fromARGB(255, 35, 87, 23),
+                                            BlendMode.srcIn),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Sombras (simulando el efecto del Marker de posición)
-                                    ...[
-                                      const Offset(-1, -1),
-                                      const Offset(1, -1),
-                                      const Offset(1, 1),
-                                      const Offset(-1, 1),
-                                    ].map((offset) => Transform.translate(
-                                          offset: offset,
-                                          child: SvgPicture.asset(
-                                            'assets/olive.svg',
-                                            width: 30,
-                                            height: 30,
-                                            colorFilter: const ColorFilter.mode(
-                                                Colors.black, BlendMode.srcIn),
-                                          ),
-                                        )),
-                                    // Icono principal
-                                    SvgPicture.asset(
-                                      'assets/olive.svg',
-                                      width: 30,
-                                      height: 30,
-                                      colorFilter: const ColorFilter.mode(
-                                          Color.fromARGB(255, 35, 87, 23),
-                                          BlendMode.srcIn),
-                                    ),
-                                  ],
-                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedOlive = olive;
+                                  });
+                                },
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _selectedOlive = olive;
-                                });
-                              },
-                            ),
-                          )),
+                            )),
                       Marker(
                         point: LatLng(pos.latitude, pos.longitude),
                         width: 40,
@@ -173,10 +180,52 @@ class _MapScreenState extends State<MapScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _focusOnCurrentLocation,
-        backgroundColor: Colors.green.shade700,
-        child: const Icon(Icons.center_focus_strong, color: Colors.white),
+      floatingActionButtonLocation: ExpandableFab.location,
+      floatingActionButton: ExpandableFab(
+        key: _fabKey,
+        type: ExpandableFabType.up,
+        distance: 70,
+        openButtonBuilder: DefaultFloatingActionButtonBuilder(
+          child: const Icon(Icons.add),
+          fabSize: ExpandableFabSize.regular,
+          backgroundColor: Colors.green.shade700,
+          foregroundColor: Colors.white,
+        ),
+        closeButtonBuilder: DefaultFloatingActionButtonBuilder(
+          child: const Icon(Icons.close),
+          fabSize: ExpandableFabSize.regular,
+          backgroundColor: Colors.red.shade700,
+          foregroundColor: Colors.white,
+        ),
+        children: [
+          FloatingActionButton(
+            heroTag: "btn_focus",
+            onPressed: () {
+              _focusOnCurrentLocation();
+              _fabKey.currentState?.toggle();
+            },
+            backgroundColor: Colors.green.shade700,
+            foregroundColor: Colors.white,
+            child: const Icon(Icons.center_focus_strong, size: 30),
+          ),
+          FloatingActionButton(
+            heroTag: "btn_visibility",
+            onPressed: () {
+              setState(() => _showOlives = !_showOlives);
+              _fabKey.currentState?.toggle();
+            },
+            backgroundColor: Colors.green.shade700,
+            child: SvgPicture.asset(
+              'assets/olive.svg',
+              width: 30,
+              height: 30,
+              colorFilter: ColorFilter.mode(
+                _showOlives ? Colors.white : Colors.red,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
