@@ -29,12 +29,39 @@ class _ARScreenState extends State<ARScreen> {
   void initState() {
     super.initState();
     LocationService.instance.startTracking();
+    LocationService.instance.addListener(_checkScanning);
   }
 
   @override
   void dispose() {
+    LocationService.instance.removeListener(_checkScanning);
     arSessionManager?.dispose();
     super.dispose();
+  }
+
+  /// Escanea constantemente la posición y orientación para detectar olivos cercanos.
+  /// Independiente de la detección de planos de ARCore/ARKit.
+  void _checkScanning() {
+    if (showInfoCard || planeFound) return;
+
+    final pos = LocationService.instance.currentPosition;
+    final heading = LocationService.instance.currentHeading;
+
+    if (pos != null && heading != null) {
+      try {
+        Olive? oliveFound = getOliveInSight(pos, heading);
+
+        if (oliveFound != null) {
+          setState(() {
+            planeFound = true;
+            _selectedOlive = oliveFound;
+            showInfoCard = true;
+          });
+        }
+      } catch (e) {
+        // Error silenciado
+      }
+    }
   }
 
   /// Reinicia los estados de la interfaz AR.
@@ -87,29 +114,9 @@ class _ARScreenState extends State<ARScreen> {
 
     arObjectManager!.onInitialize();
 
-    arSessionManager!.onPlaneDetected = (plane) async {
-      if (planeFound) return;
-
-      try {
-        final pos = LocationService.instance.currentPosition;
-        final heading = LocationService.instance.currentHeading;
-
-        if (pos == null) return;
-
-        // Buscamos el olivo más cercano en la dirección que apuntamos usando el helper
-        Olive? oliveFound = getOliveInSight(pos, heading);
-
-        if (oliveFound != null) {
-          setState(() {
-            planeFound = true;
-            _selectedOlive = oliveFound;
-            showInfoCard = true;
-          });
-        }
-      } catch (e) {
-        // Error silenciado
-      }
-    };
+    // La lógica de detección se ha movido a _checkScanning para que funcione 
+    // independientemente de si se detectan superficies físicas (planos).
+    arSessionManager!.onPlaneDetected = (plane) {};
   }
 
   /// Decide qué componente mostrar sobre la vista AR (tarjeta de info o mensaje de escaneo).
