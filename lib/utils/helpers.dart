@@ -2,6 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:tfg/services/services.dart';
+import 'package:tfg/models/models.dart';
+
+// ==========================================
+// CONSTANTES DE AR / DETECCIÓN
+// ==========================================
+const double oliveDetectionRadius = 5.0; // metros
+const double oliveFovDegrees = 30.0; // Grados de apertura del visor
+
+/// Busca el olivo más cercano a la posición actual que esté dentro del campo de visión.
+///
+/// Invocada por: ARScreen.
+Olive? getOliveInSight(Position currentPos, double? heading) {
+  final olives = DatabaseService.instance.olives;
+  if (olives.isEmpty || heading == null) return null;
+
+  Olive? closest;
+  double minDistance = oliveDetectionRadius;
+
+  for (var olive in olives) {
+    // 1. Calcular distancia
+    double distance = Geolocator.distanceBetween(
+      currentPos.latitude,
+      currentPos.longitude,
+      olive.location.latitude,
+      olive.location.longitude,
+    );
+
+    if (distance < minDistance) {
+      // 2. Calcular Bearing (dirección hacia el olivo)
+      double bearing = Geolocator.bearingBetween(
+        currentPos.latitude,
+        currentPos.longitude,
+        olive.location.latitude,
+        olive.location.longitude,
+      );
+
+      // Normalizar bearing a 0-360
+      double bearing360 = (bearing + 360) % 360;
+
+      // 3. Comprobar si está dentro del FOV (rango de visión)
+      if (isWithinFOV(heading, bearing360, oliveFovDegrees)) {
+        minDistance = distance;
+        closest = olive;
+      }
+    }
+  }
+  return closest;
+}
+
+/// Determina si un bearing está dentro del rango de visión respecto al heading actual.
+bool isWithinFOV(double heading, double bearing, double fov) {
+  double diff = (bearing - heading).abs();
+  if (diff > 180) diff = 360 - diff;
+  return diff <= (fov / 2);
+}
 
 /// Formatea una cadena de fecha a formato DD/MM/YYYY.
 ///
