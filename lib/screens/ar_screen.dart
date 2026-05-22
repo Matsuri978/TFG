@@ -4,7 +4,6 @@ import 'package:ar_flutter_plugin_2/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
 import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
 import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
-import 'package:geolocator/geolocator.dart';
 
 import 'package:tfg/services/services.dart';
 import 'package:tfg/models/models.dart';
@@ -25,6 +24,12 @@ class _ARScreenState extends State<ARScreen> {
   bool planeFound = false;
 
   Olive? _selectedOlive;
+  
+  @override
+  void initState() {
+    super.initState();
+    LocationService.instance.startTracking();
+  }
 
   @override
   void dispose() {
@@ -73,10 +78,10 @@ class _ARScreenState extends State<ARScreen> {
     arObjectManager = objectManager;
 
     arSessionManager!.onInitialize(
-      showFeaturePoints: true,
-      showPlanes: true,
+      showFeaturePoints: false,
+      showPlanes: false,
       showWorldOrigin: false,
-      showAnimatedGuide: true,
+      showAnimatedGuide: false,
       handleTaps: false,
     );
 
@@ -86,11 +91,13 @@ class _ARScreenState extends State<ARScreen> {
       if (planeFound) return;
 
       try {
-        Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.best);
+        final pos = LocationService.instance.currentPosition;
+        final heading = LocationService.instance.currentHeading;
 
-        // Buscamos el olivo más cercano de los cargados en el servicio
-        Olive? oliveFound = _getClosestOlive(position);
+        if (pos == null) return;
+
+        // Buscamos el olivo más cercano en la dirección que apuntamos usando el helper
+        Olive? oliveFound = getOliveInSight(pos, heading);
 
         if (oliveFound != null) {
           setState(() {
@@ -103,32 +110,6 @@ class _ARScreenState extends State<ARScreen> {
         // Error silenciado
       }
     };
-  }
-
-  /// Busca el olivo más cercano a la posición actual dentro de un radio de 10 metros.
-  ///
-  /// Invocada por: onPlaneDetected al detectar una superficie.
-  Olive? _getClosestOlive(Position currentPos) {
-    final olives = DatabaseService.instance.olives;
-    if (olives.isEmpty) return null;
-
-    Olive? closest;
-    double minDistance = 10.0; // metros
-
-    for (var olive in olives) {
-      double distance = Geolocator.distanceBetween(
-        currentPos.latitude,
-        currentPos.longitude,
-        olive.latitude,
-        olive.longitude,
-      );
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        closest = olive;
-      }
-    }
-    return closest;
   }
 
   /// Decide qué componente mostrar sobre la vista AR (tarjeta de info o mensaje de escaneo).
@@ -158,7 +139,7 @@ class _ARScreenState extends State<ARScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
               color: Colors.black54, borderRadius: BorderRadius.circular(30)),
-          child: const Text("Buscando olivo cercano...",
+          child: const Text("Apunta hacia un olivo cercano...",
               style: TextStyle(color: Colors.white)),
         ),
       ),
