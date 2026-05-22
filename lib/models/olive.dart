@@ -1,18 +1,18 @@
+import 'coordinate.dart';
+
 class Olive {
   final int id;
   final String enclosureId;
   final String? variety;
   final String? healthStatus;
-  final double latitude;
-  final double longitude;
+  final Coordinate location;
 
   Olive({
     required this.id,
     required this.enclosureId,
     this.variety,
     this.healthStatus,
-    required this.latitude,
-    required this.longitude,
+    required this.location,
   });
 
   /// Convierte la respuesta de Supabase a un objeto Olive.
@@ -47,8 +47,7 @@ class Olive {
       enclosureId: map['id_recinto_sigpac'] as String,
       variety: map['variedad'] as String?,
       healthStatus: map['estado_salud'] as String?,
-      latitude: lat,
-      longitude: lng,
+      location: Coordinate(latitude: lat, longitude: lng),
     );
   }
 
@@ -59,11 +58,11 @@ class Olive {
       'id_recinto_sigpac': enclosureId,
       'variedad': variety,
       'estado_salud': healthStatus,
-      'geom': 'POINT($longitude $latitude)',
+      'geom': 'POINT(${location.longitude} ${location.latitude})',
     };
   }
 
   /// Devuelve el texto formateado de las coordenadas.
   String get coordinatesText =>
-      '${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}';
+      '${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}';
 }
