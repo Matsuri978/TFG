@@ -10,6 +10,54 @@ import 'package:tfg/models/models.dart';
 const double oliveDetectionRadius = 5.0; // metros
 const double oliveFovDegrees = 30.0; // Grados de apertura del visor
 
+/// Comprueba si un punto (lat, lng) está dentro de un polígono definido por una lista de coordenadas.
+/// Implementación robusta de Ray Casting usando 3 rayos para evitar anomalías en vértices o aristas.
+///
+/// Lógica: Se lanza un rayo horizontal y uno vertical. Si coinciden, el resultado es seguro.
+/// Si no coinciden (caso anómalo en arista/vértice), se lanza un tercer rayo diagonal para desempatar.
+bool isPointInPolygon(double lat, double lng, List<Coordinate> polygon) {
+  if (polygon.isEmpty) return false;
+
+  // 1. Rayo Horizontal (Hacia la derecha)
+  bool horizontalInside = false;
+  for (int i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    if (((polygon[i].latitude > lat) != (polygon[j].latitude > lat)) &&
+        (lng < (polygon[j].longitude - polygon[i].longitude) * (lat - polygon[i].latitude) / (polygon[j].latitude - polygon[i].latitude) + polygon[i].longitude)) {
+      horizontalInside = !horizontalInside;
+    }
+  }
+
+  // 2. Rayo Vertical (Hacia arriba)
+  bool verticalInside = false;
+  for (int i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    if (((polygon[i].longitude > lng) != (polygon[j].longitude > lng)) &&
+        (lat < (polygon[j].latitude - polygon[i].latitude) * (lng - polygon[i].longitude) / (polygon[j].longitude - polygon[i].longitude) + polygon[i].latitude)) {
+      verticalInside = !verticalInside;
+    }
+  }
+
+  // 3. Si ambos coinciden, el resultado es altamente fiable
+  if (horizontalInside == verticalInside) return horizontalInside;
+
+  // 4. Caso anómalo: Lanzamos un tercer rayo diagonal (45 grados) para desempatar
+  // Esto ocurre si el punto cae justo en una arista o vértice problemático para un eje.
+  bool diagonalInside = false;
+  for (int i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    // Transformación simple para simular rayo diagonal: comparamos (lat+lng)
+    double pointSum = lat + lng;
+    double piSum = polygon[i].latitude + polygon[i].longitude;
+    double pjSum = polygon[j].latitude + polygon[j].longitude;
+
+    if (((piSum > pointSum) != (pjSum > pointSum)) &&
+        (lat - lng < (polygon[j].latitude - polygon[j].longitude - (polygon[i].latitude - polygon[i].longitude)) * 
+        (pointSum - piSum) / (pjSum - piSum) + (polygon[i].latitude - polygon[i].longitude))) {
+      diagonalInside = !diagonalInside;
+    }
+  }
+
+  return diagonalInside;
+}
+
 /// Busca el olivo más cercano a la posición actual que esté dentro del campo de visión.
 ///
 /// Invocada por: ARScreen.
