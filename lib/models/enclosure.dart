@@ -1,4 +1,5 @@
 import 'coordinate.dart';
+import 'package:tfg/utils/helpers.dart';
 
 class Enclosure {
   final String id;
@@ -8,6 +9,10 @@ class Enclosure {
   final String sigpacUse;
   final List<Coordinate> coordinates;
 
+  // Bounding Box (AABB) calculada una sola vez para optimización espacial
+  late final Coordinate minBounds;
+  late final Coordinate maxBounds;
+
   Enclosure({
     required this.id,
     required this.cadastralRef,
@@ -15,7 +20,33 @@ class Enclosure {
     required this.enclosureNumber,
     required this.sigpacUse,
     required this.coordinates,
-  });
+  }) {
+    _calculateBounds();
+  }
+
+  /// Calcula la caja delimitadora (Bounding Box) del polígono.
+  void _calculateBounds() {
+    if (coordinates.isEmpty) {
+      minBounds = Coordinate(latitude: 0.0, longitude: 0.0);
+      maxBounds = Coordinate(latitude: 0.0, longitude: 0.0);
+      return;
+    }
+
+    double minLat = coordinates[0].latitude;
+    double minLng = coordinates[0].longitude;
+    double maxLat = coordinates[0].latitude;
+    double maxLng = coordinates[0].longitude;
+
+    for (var coord in coordinates) {
+      if (coord.latitude < minLat) minLat = coord.latitude;
+      if (coord.longitude < minLng) minLng = coord.longitude;
+      if (coord.latitude > maxLat) maxLat = coord.latitude;
+      if (coord.longitude > maxLng) maxLng = coord.longitude;
+    }
+
+    minBounds = Coordinate(latitude: minLat, longitude: minLng);
+    maxBounds = Coordinate(latitude: maxLat, longitude: maxLng);
+  }
 
   /// Crea un objeto Enclosure a partir de un mapa de Supabase.
   factory Enclosure.fromMap(Map<String, dynamic> map) {
@@ -23,11 +54,9 @@ class Enclosure {
 
     if (map['geom'] != null) {
       final geom = map['geom'];
-      // Si el geom viene como GeoJSON (Polygon o MultiPolygon)
       if (geom is Map && geom['coordinates'] != null) {
         var rawCoords = geom['coordinates'];
 
-        // Si es Polygon: [[[lng, lat], [lng, lat], ...]]
         if (geom['type'] == 'Polygon') {
           for (var point in rawCoords[0]) {
             coords.add(Coordinate(
@@ -35,9 +64,7 @@ class Enclosure {
               longitude: (point[0] as num).toDouble(),
             ));
           }
-        }
-        // Si es MultiPolygon (cogemos el primer polígono por simplicidad)
-        else if (geom['type'] == 'MultiPolygon') {
+        } else if (geom['type'] == 'MultiPolygon') {
           for (var point in rawCoords[0][0]) {
             coords.add(Coordinate(
               latitude: (point[1] as num).toDouble(),
@@ -51,37 +78,23 @@ class Enclosure {
     return Enclosure(
       id: map['id_recinto_sigpac'] as String,
       cadastralRef: map['ref_catastral'] as String,
-      polygonNumber: map['num_poligono'] as String,
-      enclosureNumber: map['num_recinto'] as String,
-      sigpacUse: map['uso_sigpac'] as String,
+      polygonNumber: map['num_poligono']?.toString() ?? '',
+      enclosureNumber: map['num_recinto']?.toString() ?? '',
+      sigpacUse: map['uso_sigpac']?.toString() ?? '',
       coordinates: coords,
     );
   }
 
-  /// Devuelve el punto mínimo del polígono como un objeto Coordinate.
-  Coordinate get minBounds {
-    if (coordinates.isEmpty) return Coordinate(latitude: 0.0, longitude: 0.0);
-    double minLat = coordinates[0].latitude;
-    double minLng = coordinates[0].longitude;
-
-    for (var coord in coordinates) {
-      if (coord.latitude < minLat) minLat = coord.latitude;
-      if (coord.longitude < minLng) minLng = coord.longitude;
-    }
-    return Coordinate(latitude: minLat, longitude: minLng);
-  }
-
-  /// Devuelve el punto máximo del polígono como un objeto Coordinate.
-  Coordinate get maxBounds {
-    if (coordinates.isEmpty) return Coordinate(latitude: 0.0, longitude: 0.0);
-    double maxLat = coordinates[0].latitude;
-    double maxLng = coordinates[0].longitude;
-
-    for (var coord in coordinates) {
-      if (coord.latitude > maxLat) maxLat = coord.latitude;
-      if (coord.longitude > maxLng) maxLng = coord.longitude;
-    }
-    return Coordinate(latitude: maxLat, longitude: maxLng);
+  /// Determina si un punto geográfico está dentro del recinto.
+  /// Utiliza optimización por Bounding Box y Ray Casting.
+  bool contains(double lat, double lng) {
+    return isPointInPolygon(
+      lat,
+      lng,
+      coordinates,
+      min: minBounds,
+      max: maxBounds,
+    );
   }
 
   /// Convierte el objeto Enclosure a Map para Supabase.

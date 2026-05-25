@@ -87,8 +87,7 @@ class DatabaseService extends ChangeNotifier {
       // 1. COMPROBACIÓN LOCAL (Algoritmo Ray Casting)
       // Si ya tenemos un recinto, comprobamos matemáticamente si seguimos dentro.
       if (currentEnclosure != null && currentEnclosure!.coordinates.isNotEmpty) {
-        bool stillInside = isPointInPolygon(lat, lng, currentEnclosure!.coordinates);
-        if (stillInside) {
+        if (currentEnclosure!.contains(lat, lng)) {
           return false; // Seguimos dentro, optimizamos evitando la petición a la DB.
         }
       }

@@ -13,10 +13,22 @@ const double oliveFovDegrees = 30.0; // Grados de apertura del visor
 /// Comprueba si un punto (lat, lng) está dentro de un polígono definido por una lista de coordenadas.
 /// Implementación robusta de Ray Casting usando 3 rayos para evitar anomalías en vértices o aristas.
 ///
-/// Lógica: Se lanza un rayo horizontal y uno vertical. Si coinciden, el resultado es seguro.
-/// Si no coinciden (caso anómalo en arista/vértice), se lanza un tercer rayo diagonal para desempatar.
-bool isPointInPolygon(double lat, double lng, List<Coordinate> polygon) {
+/// [min] y [max] son opcionales y representan la Bounding Box del polígono para optimización previa.
+bool isPointInPolygon(double lat, double lng, List<Coordinate> polygon,
+    {Coordinate? min, Coordinate? max}) {
   if (polygon.isEmpty) return false;
+
+  // 0. OPTIMIZACIÓN POR BOUNDING BOX (AABB)
+  // Si el punto está fuera de la caja delimitadora, no puede estar en el polígono.
+  // Esta comprobación de 4 comparaciones es mucho más rápida que el Ray Casting.
+  if (min != null && max != null) {
+    if (lat < min.latitude ||
+        lat > max.latitude ||
+        lng < min.longitude ||
+        lng > max.longitude) {
+      return false;
+    }
+  }
 
   // 1. Rayo Horizontal (Hacia la derecha)
   bool horizontalInside = false;
