@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:geolocator/geolocator.dart';
 import 'package:tfg/models/models.dart';
 import 'package:tfg/services/services.dart';
@@ -97,4 +98,49 @@ bool isWithinFOV(double heading, double bearing, double fov) {
   double diff = (bearing - heading).abs();
   if (diff > 180) diff = 360 - diff;
   return diff <= (fov / 2);
+}
+
+/// Calcula la distancia perpendicular de un punto a una línea definida por dos puntos.
+double perpendicularDistance(Coordinate p, Coordinate start, Coordinate end) {
+  double x = p.longitude;
+  double y = p.latitude;
+  double x1 = start.longitude;
+  double y1 = start.latitude;
+  double x2 = end.longitude;
+  double y2 = end.latitude;
+
+  if (x1 == x2 && y1 == y2) {
+    return sqrt(pow(x - x1, 2) + pow(y - y1, 2));
+  }
+
+  double numerator = ((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1).abs();
+  double denominator = sqrt(pow(y2 - y1, 2) + pow(x2 - x1, 2));
+
+  return numerator / denominator;
+}
+
+/// Implementación del algoritmo de Douglas-Peucker para la simplificación de polígonos.
+/// Reduce el número de vértices manteniendo la forma geométrica esencial.
+/// [epsilon]: Tolerancia de error (en grados). 0.00001 aprox. 1.1 metros.
+List<Coordinate> douglasPeucker(List<Coordinate> points, double epsilon) {
+  if (points.length < 3) return points;
+
+  int maxIndex = 0;
+  double maxDistance = 0.0;
+
+  for (int i = 1; i < points.length - 1; i++) {
+    double distance = perpendicularDistance(points[i], points[0], points.last);
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      maxIndex = i;
+    }
+  }
+
+  if (maxDistance > epsilon) {
+    List<Coordinate> firstHalf = douglasPeucker(points.sublist(0, maxIndex + 1), epsilon);
+    List<Coordinate> secondHalf = douglasPeucker(points.sublist(maxIndex), epsilon);
+    return [...firstHalf.sublist(0, firstHalf.length - 1), ...secondHalf];
+  } else {
+    return [points[0], points.last];
+  }
 }

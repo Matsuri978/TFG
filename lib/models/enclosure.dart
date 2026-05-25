@@ -9,6 +9,9 @@ class Enclosure {
   final String sigpacUse;
   final List<Coordinate> coordinates;
 
+  // Geometría simplificada (para cálculos espaciales rápidos)
+  late final List<Coordinate> simplifiedCoordinates;
+
   // Bounding Box (AABB) calculada una sola vez para optimización espacial
   late final Coordinate minBounds;
   late final Coordinate maxBounds;
@@ -20,7 +23,9 @@ class Enclosure {
     required this.enclosureNumber,
     required this.sigpacUse,
     required this.coordinates,
+    double epsilon = 0.00002, // Tolerancia de ~2 metros por defecto
   }) {
+    simplifiedCoordinates = douglasPeucker(coordinates, epsilon);
     _calculateBounds();
   }
 
@@ -86,12 +91,12 @@ class Enclosure {
   }
 
   /// Determina si un punto geográfico está dentro del recinto.
-  /// Utiliza optimización por Bounding Box y Ray Casting.
+  /// Utiliza la geometría SIMPLIFICADA para ganar rendimiento en el Ray Casting.
   bool contains(double lat, double lng) {
     return isPointInPolygon(
       lat,
       lng,
-      coordinates,
+      simplifiedCoordinates,
       min: minBounds,
       max: maxBounds,
     );
