@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_compass/flutter_compass.dart';
+import 'package:tfg/utils/utils.dart';
 
 class LocationService extends ChangeNotifier {
   // ==========================================
@@ -27,6 +29,15 @@ class LocationService extends ChangeNotifier {
   String _statusMessage = 'Inicializando...';
   StreamSubscription<Position>? _positionStreamSubscription;
   StreamSubscription<CompassEvent>? _compassSubscription;
+
+  // Filtros de Kalman para suavizar señales
+  final KalmanFilter _latFilter = KalmanFilter(processNoise: 0.000001); // Ruido muy bajo para coords
+  final KalmanFilter _lngFilter = KalmanFilter(processNoise: 0.000001);
+  final KalmanFilter _headingFilter = KalmanFilter(processNoise: 0.1);
+
+  // Variables para el cálculo dinámico de R en la brújula
+  final List<double> _compassHistory = [];
+  static const int _historyLimit = 10;
 
   // Getters para acceder desde la UI
   Position? get currentPosition => _currentPosition;
@@ -87,7 +98,19 @@ class LocationService extends ChangeNotifier {
         _currentPlace = null;
       }
 
-      _currentPosition = position;
+      _currentPosition = Position(
+        latitude: _latFilter.filter(position.latitude, customR: position.accuracy / 111320), // Convierte metros a grados aprox.
+        longitude: _lngFilter.filter(position.longitude, customR: position.accuracy / 111320),
+        timestamp: position.timestamp,
+        accuracy: position.accuracy,
+        altitude: position.altitude,
+        altitudeAccuracy: position.altitudeAccuracy,
+        heading: position.heading,
+        headingAccuracy: position.headingAccuracy,
+        speed: position.speed,
+        speedAccuracy: position.speedAccuracy,
+      );
+      
       _statusMessage = 'Ubicación actualizada';
 
       // Avisa a ListenableBuilder para que redibuje la pantalla
@@ -96,9 +119,27 @@ class LocationService extends ChangeNotifier {
 
     _compassSubscription?.cancel();
     _compassSubscription = FlutterCompass.events?.listen((event) {
-      _currentHeading = event.heading;
-      notifyListeners();
+      if (event.heading != null) {
+        // Cálculo de R dinámico para brújula basado en la estabilidad reciente
+        _compassHistory.add(event.heading!);
+        if (_compassHistory.length > _historyLimit) _compassHistory.removeAt(0);
+        
+        double dynamicR = _calculateCompassVariance();
+        
+        _currentHeading = _headingFilter.filterAngle(event.heading!, customR: dynamicR);
+        notifyListeners();
+      }
     });
+  }
+
+  /// Calcula la varianza de las últimas lecturas de la brújula para auto-ajustar el filtro.
+  double _calculateCompassVariance() {
+    if (_compassHistory.length < 2) return 4.0; 
+    
+    double mean = _compassHistory.reduce((a, b) => a + b) / _compassHistory.length;
+    double variance = _compassHistory.map((x) => pow(x - mean, 2)).reduce((a, b) => a + b) / _compassHistory.length;
+    
+    return variance.clamp(1.0, 20.0);
   }
 
   /// Detiene el rastreo de la ubicación y cancela la suscripción al flujo de posiciones.
