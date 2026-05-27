@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:tfg/models/models.dart';
-import 'package:tfg/services/services.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/models/models.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class DevAddOliveScreen extends StatefulWidget {
   const DevAddOliveScreen({super.key});

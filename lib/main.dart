@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:tfg/services/services.dart';
-import 'package:tfg/screens/screens.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/screens/screens.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TFG Olivar',
+      title: 'ARceituna',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),

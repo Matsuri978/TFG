@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:tfg/models/models.dart';
-import 'package:tfg/screens/screens.dart';
-import 'package:tfg/services/services.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/models/models.dart';
+import 'package:arceituna/screens/screens.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class OliveInfoCard extends StatefulWidget {
   final Olive olive;

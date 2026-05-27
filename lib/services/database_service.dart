@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:tfg/models/models.dart';
-import 'package:tfg/services/services.dart';
+import 'package:arceituna/models/models.dart';
+import 'package:arceituna/services/services.dart';
 
 
 class DatabaseService extends ChangeNotifier {

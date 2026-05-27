@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tfg/screens/screens.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/screens/screens.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

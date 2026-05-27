@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // Solo para capturar AuthException
 
-import 'package:tfg/services/services.dart';
-import 'package:tfg/screens/screens.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/screens/screens.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

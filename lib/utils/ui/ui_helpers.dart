@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:tfg/services/services.dart';
-import 'package:tfg/utils/format_helpers.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/utils/format_helpers.dart';
 
 /// Muestra una fila de información personalizable.
 Widget infoRow(

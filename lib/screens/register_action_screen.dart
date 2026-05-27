@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tfg/models/models.dart';
-import 'package:tfg/services/services.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/models/models.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class RegisterActionScreen extends StatefulWidget {
   final Olive olive;

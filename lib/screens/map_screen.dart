@@ -3,9 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
-import 'package:tfg/services/services.dart';
-import 'package:tfg/models/models.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/models/models.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -83,7 +83,7 @@ class _MapScreenState extends State<MapScreen> {
                     // Usamos el servicio WMTS del IGN para evitar el error de bbox
                     urlTemplate:
                         'https://www.ign.es/wmts/pnoa-ma?layer=OI.OrthoimageCoverage&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix={z}&TileCol={x}&TileRow={y}',
-                    userAgentPackageName: 'com.example.tfg',
+                    userAgentPackageName: 'com.example.arceituna',
                   ),
                   if (enclosure != null && enclosure.coordinates.isNotEmpty)
                     PolygonLayer(

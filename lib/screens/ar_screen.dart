@@ -5,9 +5,9 @@ import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
 import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
 import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
 
-import 'package:tfg/services/services.dart';
-import 'package:tfg/models/models.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/models/models.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class ARScreen extends StatefulWidget {
   const ARScreen({super.key});

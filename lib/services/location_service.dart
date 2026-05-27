@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_compass/flutter_compass.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class LocationService extends ChangeNotifier {
   // ==========================================

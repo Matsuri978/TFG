@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tfg/services/services.dart';
-import 'package:tfg/utils/utils.dart';
+import 'package:arceituna/services/services.dart';
+import 'package:arceituna/utils/utils.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
